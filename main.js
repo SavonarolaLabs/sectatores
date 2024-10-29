@@ -4,43 +4,35 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 const MAP_SIZE = 48;
 
 const scene = new TR.Scene();
-
 const renderer = new TR.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputEncoding = TR.sRGBEncoding;
 document.body.appendChild(renderer.domElement);
 
-// Adjust the camera for isometric view
 const aspect = window.innerWidth / window.innerHeight;
 const d = MAP_SIZE * 2;
 const camera = new TR.OrthographicCamera(-d * aspect, d * aspect, d, -d, 0.1, 1000);
 
-// Position and rotate the camera for isometric projection
-const angle = Math.atan(Math.sqrt(2) / 2); // Approximately 35.264 degrees
+const angle = Math.atan(Math.sqrt(2) / 2);
 camera.position.set(MAP_SIZE, MAP_SIZE, MAP_SIZE);
 camera.rotation.order = 'YXZ';
-camera.rotation.y = -Math.PI / 4; // Rotate -45 degrees around Y-axis
-camera.rotation.x = -angle; // Rotate downwards to look at the scene
+camera.rotation.y = -Math.PI / 4;
+camera.rotation.x = -angle;
 
-// Create a background plane that covers the camera's view
 const backgroundScene = new TR.Scene();
 const backgroundCamera = new TR.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-// Load the background texture
 const textureLoader = new TR.TextureLoader();
 textureLoader.load(
   'assets/snow.png',
   (texture) => {
     texture.encoding = TR.sRGBEncoding;
-
     const backgroundMaterial = new TR.MeshBasicMaterial({
       map: texture,
       depthTest: false,
       depthWrite: false,
     });
-
     const backgroundPlane = new TR.Mesh(new TR.PlaneGeometry(2, 2), backgroundMaterial);
-
     backgroundPlane.material.depthTest = false;
     backgroundPlane.material.depthWrite = false;
     backgroundScene.add(backgroundPlane);
@@ -51,7 +43,7 @@ textureLoader.load(
   }
 );
 
-let mixer;
+let mixer, idleAction, attackAction;
 
 const gltfLoader = new GLTFLoader();
 gltfLoader.load(
@@ -71,9 +63,14 @@ gltfLoader.load(
 
     mixer = new TR.AnimationMixer(model);
 
-    const idleClip = gltf.animations.find((clip) => clip.name.toLowerCase().includes('idle')) || gltf.animations[0];
-    const idleAction = mixer.clipAction(idleClip);
+    const idleClip = gltf.animations.find((clip) => clip.name.toLowerCase().includes('idle'));
+    idleAction = mixer.clipAction(idleClip);
     idleAction.play();
+
+    const attackClip = gltf.animations.find((clip) => clip.name.toLowerCase().includes('attack'));
+    attackAction = mixer.clipAction(attackClip);
+    attackAction.loop = TR.LoopOnce;
+    attackAction.clampWhenFinished = true;
   },
   undefined,
   (error) => {
@@ -84,24 +81,37 @@ gltfLoader.load(
 const clock = new TR.Clock();
 
 renderer.setAnimationLoop(() => {
-  const delta = clock.getDelta(); // Get the time elapsed since the last frame in seconds
+  const delta = clock.getDelta();
   if (mixer) mixer.update(delta);
 
   renderer.autoClear = false;
   renderer.clear();
-
-  // Render the background scene
   renderer.render(backgroundScene, backgroundCamera);
-
-  // Render the main scene
   renderer.render(scene, camera);
 });
 
-// Handle window resize to maintain aspect ratio
 window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
   const aspect = window.innerWidth / window.innerHeight;
   camera.left = -d * aspect;
   camera.right = d * aspect;
   camera.updateProjectionMatrix();
+});
+
+window.addEventListener('keydown', (event) => {
+  if (event.key === 'q' && attackAction && idleAction) {
+    idleAction.fadeOut(0.1);
+    attackAction.reset().fadeIn(0.1).play();
+
+    attackAction.loop = TR.LoopOnce;
+    attackAction.clampWhenFinished = true;
+
+    mixer.addEventListener('finished', function restoreIdle(e) {
+      if (e.action === attackAction) {
+        mixer.removeEventListener('finished', restoreIdle);
+        attackAction.stop();
+        idleAction.reset().fadeIn(0.1).play();
+      }
+    });
+  }
 });
