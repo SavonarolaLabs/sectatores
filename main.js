@@ -9,7 +9,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputEncoding = TR.sRGBEncoding;
 document.body.appendChild(renderer.domElement);
 
-const aspect = window.innerWidth / window.innerHeight;
+let aspect = window.innerWidth / window.innerHeight;
 const d = MAP_SIZE * 2;
 const camera = new TR.OrthographicCamera(-d * aspect, d * aspect, d, -d, 0.1, 1000);
 
@@ -75,15 +75,23 @@ let lightningPlane, lightningTexture;
 let currentFrame = 0;
 let lastFrameTime = 0;
 const totalFrames = 30;
-const frameChangeInterval = 70; // Frame duration in ms
+const frameChangeInterval = 50; // Frame duration in ms (adjusted to 50ms)
 
 textureLoader.load('assets/lightning.png', (texture) => {
   lightningTexture = texture;
   lightningTexture.encoding = TR.sRGBEncoding;
-  lightningTexture.wrapS = TR.RepeatWrapping;
-  lightningTexture.wrapT = TR.RepeatWrapping;
-  lightningTexture.repeat.set(1 / 6, 1 / 5); // Each frame size (6x5 grid)
-  lightningTexture.offset.set(0, 1 - 1 / 5); // Start from the first frame
+  lightningTexture.wrapS = TR.ClampToEdgeWrapping;
+  lightningTexture.wrapT = TR.ClampToEdgeWrapping;
+  lightningTexture.minFilter = TR.NearestFilter;
+  lightningTexture.magFilter = TR.NearestFilter;
+  lightningTexture.generateMipmaps = false;
+
+  const columns = 6;
+  const rows = 5;
+  const frameWidth = 1 / columns;
+  const frameHeight = 1 / rows;
+
+  lightningTexture.repeat.set(frameWidth, frameHeight);
 
   const lightningMaterial = new TR.MeshBasicMaterial({
     map: lightningTexture,
@@ -91,7 +99,7 @@ textureLoader.load('assets/lightning.png', (texture) => {
     side: TR.DoubleSide,
     depthTest: false, // Ensures it's rendered in front
   });
-  lightningPlane = new TR.Mesh(new TR.PlaneGeometry(50, 50), lightningMaterial);
+  lightningPlane = new TR.Mesh(new TR.PlaneGeometry(30, 30), lightningMaterial);
   lightningPlane.visible = false;
   lightningPlane.renderOrder = 999; // Render on top
 
@@ -113,9 +121,22 @@ renderer.setAnimationLoop(() => {
     const currentTime = Date.now();
     if (currentTime - lastFrameTime >= frameChangeInterval) {
       lastFrameTime = currentTime;
-      const col = currentFrame % 6;
-      const row = Math.floor(currentFrame / 6) % 5;
-      lightningTexture.offset.set(col / 6, 1 - (row + 1) / 5);
+      const columns = 6;
+      const rows = 5;
+      const frameWidth = 1 / columns;
+      const frameHeight = 1 / rows;
+
+      const col = currentFrame % columns;
+      const row = Math.floor(currentFrame / columns) % rows;
+
+      // Adjustments to prevent artifacts
+      const epsilonX = 0.0005;
+      const epsilonY = 0.0005;
+
+      lightningTexture.offset.x = col * frameWidth + epsilonX;
+      lightningTexture.offset.y = 1 - (row + 1) * frameHeight + epsilonY;
+      lightningTexture.repeat.set(frameWidth - 2 * epsilonX, frameHeight - 2 * epsilonY);
+
       currentFrame++;
       if (currentFrame >= totalFrames) {
         lightningPlane.visible = false;
@@ -130,12 +151,47 @@ renderer.setAnimationLoop(() => {
   }
 });
 
+function updateLightningPlane() {
+  const d = MAP_SIZE * 2;
+  aspect = window.innerWidth / window.innerHeight;
+
+  // Calculate one pixel in world units
+  const deltaY = (2 * d) / window.innerHeight;
+
+  // Positioning the top of the lightning 1 pixel above the top edge
+  const yTop = 83;
+  const planeHeight = (2 / 3) * (2 * d); // Span from top to 2/3 down
+  const yBottom = yTop - planeHeight;
+
+  // Adjust plane width based on the texture's aspect ratio
+  const columns = 6;
+  const rows = 5;
+  const textureAspect = lightningTexture.image.width / columns / (lightningTexture.image.height / rows);
+  const planeWidth = planeHeight * textureAspect;
+
+  // Position the lightning in the center or more to the right
+  const xPos = 140; // Adjust this value to move more to the right
+
+  // Calculate the position to align the top edge of the plane with yTop
+  const yPosition = yTop - planeHeight / 2;
+
+  // Update plane geometry and position
+  if (lightningPlane) {
+    lightningPlane.geometry.dispose();
+    lightningPlane.geometry = new TR.PlaneGeometry(planeWidth, planeHeight);
+    lightningPlane.position.set(xPos, yPosition, 0);
+    lightningPlane.quaternion.copy(camera.quaternion);
+  }
+}
+
 window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
-  const aspect = window.innerWidth / window.innerHeight;
+  aspect = window.innerWidth / window.innerHeight;
   camera.left = -d * aspect;
   camera.right = d * aspect;
   camera.updateProjectionMatrix();
+
+  updateLightningPlane(); // Update lightning plane on resize
 });
 
 window.addEventListener('keydown', (event) => {
@@ -146,6 +202,34 @@ window.addEventListener('keydown', (event) => {
     attackAction.loop = TR.LoopOnce;
     attackAction.clampWhenFinished = true;
 
+    const firstSound = new Audio('assets/lightning-eyes.mp3');
+    const secondSound = new Audio('assets/electric-shock-sound-effect.mp3');
+
+    firstSound.currentTime = 0.8;
+    firstSound.play();
+
+    setTimeout(() => {
+      const fadeDuration = 300; // Duration of fade-out in milliseconds
+      const fadeSteps = 10; // Number of steps for smooth fade-out
+      const fadeInterval = fadeDuration / fadeSteps;
+
+      let volumeStep = firstSound.volume / fadeSteps;
+
+      const fadeOut = setInterval(() => {
+        firstSound.volume = Math.max(0, firstSound.volume - volumeStep);
+        if (firstSound.volume === 0) {
+          clearInterval(fadeOut);
+          firstSound.pause();
+          firstSound.currentTime = 0; // Reset to beginning if needed
+          firstSound.volume = 1; // Reset volume for next playback
+        }
+      }, fadeInterval);
+    }, 1500); // Start fade-out after 2 seconds
+
+    setTimeout(() => {
+      secondSound.play();
+    }, 300);
+
     mixer.addEventListener('finished', function restoreIdle(e) {
       if (e.action === attackAction) {
         mixer.removeEventListener('finished', restoreIdle);
@@ -154,22 +238,17 @@ window.addEventListener('keydown', (event) => {
       }
     });
 
+    // Darken the background by 90%
+    if (backgroundMaterial) {
+      backgroundMaterial.color.setRGB(0.1, 0.1, 0.1);
+    }
     setTimeout(() => {
       if (lightningPlane && model) {
         lightningPlane.visible = true;
         currentFrame = 0; // Reset animation
         lastFrameTime = Date.now();
 
-        // Position the plane at the model's position
-        lightningPlane.position.copy(model.position);
-
-        // Ensure the plane faces the camera
-        lightningPlane.quaternion.copy(camera.quaternion);
-
-        // Darken the background by 90%
-        if (backgroundMaterial) {
-          backgroundMaterial.color.setRGB(0.1, 0.1, 0.1);
-        }
+        updateLightningPlane(); // Update plane position and size
       }
     }, 1000);
   }
