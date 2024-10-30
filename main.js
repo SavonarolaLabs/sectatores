@@ -23,33 +23,25 @@ const backgroundScene = new TR.Scene();
 const backgroundCamera = new TR.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
 const textureLoader = new TR.TextureLoader();
-textureLoader.load(
-  'assets/snow.png',
-  (texture) => {
-    texture.encoding = TR.sRGBEncoding;
-    const backgroundMaterial = new TR.MeshBasicMaterial({
-      map: texture,
-      depthTest: false,
-      depthWrite: false,
-    });
-    const backgroundPlane = new TR.Mesh(new TR.PlaneGeometry(2, 2), backgroundMaterial);
-    backgroundPlane.material.depthTest = false;
-    backgroundPlane.material.depthWrite = false;
-    backgroundScene.add(backgroundPlane);
-  },
-  undefined,
-  (error) => {
-    console.error('Error loading background texture:', error);
-  }
-);
+let backgroundMaterial; // Declare backgroundMaterial globally
+textureLoader.load('assets/snow.png', (texture) => {
+  texture.encoding = TR.sRGBEncoding;
+  backgroundMaterial = new TR.MeshBasicMaterial({
+    map: texture,
+    depthTest: false,
+    depthWrite: false,
+  });
+  const backgroundPlane = new TR.Mesh(new TR.PlaneGeometry(2, 2), backgroundMaterial);
+  backgroundScene.add(backgroundPlane);
+});
 
 let mixer, idleAction, attackAction;
-
+let model; // Declare model globally
 const gltfLoader = new GLTFLoader();
 gltfLoader.load(
   'assets/fulmen/fulmen.gltf',
   (gltf) => {
-    const model = gltf.scene;
+    model = gltf.scene;
     model.position.set(0, 0, 0);
     model.scale.set(10, 10, 10);
 
@@ -78,6 +70,34 @@ gltfLoader.load(
   }
 );
 
+// Lightning animation setup
+let lightningPlane, lightningTexture;
+let currentFrame = 0;
+let lastFrameTime = 0;
+const totalFrames = 30;
+const frameChangeInterval = 70; // Frame duration in ms
+
+textureLoader.load('assets/lightning.png', (texture) => {
+  lightningTexture = texture;
+  lightningTexture.encoding = TR.sRGBEncoding;
+  lightningTexture.wrapS = TR.RepeatWrapping;
+  lightningTexture.wrapT = TR.RepeatWrapping;
+  lightningTexture.repeat.set(1 / 6, 1 / 5); // Each frame size (6x5 grid)
+  lightningTexture.offset.set(0, 1 - 1 / 5); // Start from the first frame
+
+  const lightningMaterial = new TR.MeshBasicMaterial({
+    map: lightningTexture,
+    transparent: true,
+    side: TR.DoubleSide,
+    depthTest: false, // Ensures it's rendered in front
+  });
+  lightningPlane = new TR.Mesh(new TR.PlaneGeometry(50, 50), lightningMaterial);
+  lightningPlane.visible = false;
+  lightningPlane.renderOrder = 999; // Render on top
+
+  scene.add(lightningPlane);
+});
+
 const clock = new TR.Clock();
 
 renderer.setAnimationLoop(() => {
@@ -88,6 +108,26 @@ renderer.setAnimationLoop(() => {
   renderer.clear();
   renderer.render(backgroundScene, backgroundCamera);
   renderer.render(scene, camera);
+
+  if (lightningPlane && lightningPlane.visible) {
+    const currentTime = Date.now();
+    if (currentTime - lastFrameTime >= frameChangeInterval) {
+      lastFrameTime = currentTime;
+      const col = currentFrame % 6;
+      const row = Math.floor(currentFrame / 6) % 5;
+      lightningTexture.offset.set(col / 6, 1 - (row + 1) / 5);
+      currentFrame++;
+      if (currentFrame >= totalFrames) {
+        lightningPlane.visible = false;
+        currentFrame = 0;
+
+        // Restore background color when lightning animation ends
+        if (backgroundMaterial) {
+          backgroundMaterial.color.setRGB(1, 1, 1);
+        }
+      }
+    }
+  }
 });
 
 window.addEventListener('resize', () => {
@@ -113,5 +153,24 @@ window.addEventListener('keydown', (event) => {
         idleAction.reset().fadeIn(0.1).play();
       }
     });
+
+    setTimeout(() => {
+      if (lightningPlane && model) {
+        lightningPlane.visible = true;
+        currentFrame = 0; // Reset animation
+        lastFrameTime = Date.now();
+
+        // Position the plane at the model's position
+        lightningPlane.position.copy(model.position);
+
+        // Ensure the plane faces the camera
+        lightningPlane.quaternion.copy(camera.quaternion);
+
+        // Darken the background by 90%
+        if (backgroundMaterial) {
+          backgroundMaterial.color.setRGB(0.1, 0.1, 0.1);
+        }
+      }
+    }, 1000);
   }
 });
