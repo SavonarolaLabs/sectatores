@@ -23,7 +23,7 @@ const backgroundScene = new TR.Scene();
 const backgroundCamera = new TR.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
 const textureLoader = new TR.TextureLoader();
-let backgroundMaterial; // Declare backgroundMaterial globally
+let backgroundMaterial;
 textureLoader.load('assets/snow.png', (texture) => {
   texture.encoding = TR.sRGBEncoding;
   backgroundMaterial = new TR.MeshBasicMaterial({
@@ -36,7 +36,7 @@ textureLoader.load('assets/snow.png', (texture) => {
 });
 
 let mixer, idleAction, attackAction;
-let model; // Declare model globally
+let model;
 const gltfLoader = new GLTFLoader();
 gltfLoader.load(
   'assets/fulmen/fulmen.gltf',
@@ -75,7 +75,7 @@ let lightningPlane, lightningTexture;
 let currentFrame = 0;
 let lastFrameTime = 0;
 const totalFrames = 30;
-const frameChangeInterval = 50; // Frame duration in ms (adjusted to 50ms)
+const frameChangeInterval = 50;
 
 textureLoader.load('assets/lightning.png', (texture) => {
   lightningTexture = texture;
@@ -97,14 +97,38 @@ textureLoader.load('assets/lightning.png', (texture) => {
     map: lightningTexture,
     transparent: true,
     side: TR.DoubleSide,
-    depthTest: false, // Ensures it's rendered in front
+    depthTest: false,
   });
   lightningPlane = new TR.Mesh(new TR.PlaneGeometry(30, 30), lightningMaterial);
   lightningPlane.visible = false;
-  lightningPlane.renderOrder = 999; // Render on top
+  lightningPlane.renderOrder = 999;
 
   scene.add(lightningPlane);
 });
+
+// Aura setup
+const auraTextures = [];
+const auraFrames = 32;
+let currentAuraFrame = 0;
+const auraFrameInterval = 50; // Milliseconds per frame
+let lastAuraFrameTime = 0;
+
+// Load each aura frame into the array
+for (let i = 1; i <= auraFrames; i++) {
+  const texture = textureLoader.load(`assets/energyBall/aura_test_1_32_${i}.png`);
+  texture.encoding = TR.sRGBEncoding;
+  auraTextures.push(texture);
+}
+
+// Create a sprite to display the aura animation
+const auraMaterial = new TR.SpriteMaterial({
+  map: auraTextures[0],
+  transparent: true,
+});
+const auraSprite = new TR.Sprite(auraMaterial);
+auraSprite.scale.set(40, 40, 1); // Adjust the size of the aura around the character
+auraSprite.position.set(0, 10, 0); // Position it around the character
+scene.add(auraSprite);
 
 const clock = new TR.Clock();
 
@@ -117,6 +141,7 @@ renderer.setAnimationLoop(() => {
   renderer.render(backgroundScene, backgroundCamera);
   renderer.render(scene, camera);
 
+  // Update lightning frame
   if (lightningPlane && lightningPlane.visible) {
     const currentTime = Date.now();
     if (currentTime - lastFrameTime >= frameChangeInterval) {
@@ -129,7 +154,6 @@ renderer.setAnimationLoop(() => {
       const col = currentFrame % columns;
       const row = Math.floor(currentFrame / columns) % rows;
 
-      // Adjustments to prevent artifacts
       const epsilonX = 0.0005;
       const epsilonY = 0.0005;
 
@@ -142,12 +166,19 @@ renderer.setAnimationLoop(() => {
         lightningPlane.visible = false;
         currentFrame = 0;
 
-        // Restore background color when lightning animation ends
         if (backgroundMaterial) {
           backgroundMaterial.color.setRGB(1, 1, 1);
         }
       }
     }
+  }
+
+  // Update aura frame for looping animation
+  const currentAuraTime = Date.now();
+  if (currentAuraTime - lastAuraFrameTime >= auraFrameInterval) {
+    lastAuraFrameTime = currentAuraTime;
+    currentAuraFrame = (currentAuraFrame + 1) % auraFrames;
+    auraMaterial.map = auraTextures[currentAuraFrame];
   }
 });
 
@@ -155,27 +186,20 @@ function updateLightningPlane() {
   const d = MAP_SIZE * 2;
   aspect = window.innerWidth / window.innerHeight;
 
-  // Calculate one pixel in world units
   const deltaY = (2 * d) / window.innerHeight;
 
-  // Positioning the top of the lightning 1 pixel above the top edge
   const yTop = 83;
-  const planeHeight = (2 / 3) * (2 * d); // Span from top to 2/3 down
+  const planeHeight = (2 / 3) * (2 * d);
   const yBottom = yTop - planeHeight;
 
-  // Adjust plane width based on the texture's aspect ratio
   const columns = 6;
   const rows = 5;
   const textureAspect = lightningTexture.image.width / columns / (lightningTexture.image.height / rows);
   const planeWidth = planeHeight * textureAspect;
 
-  // Position the lightning in the center or more to the right
-  const xPos = 140; // Adjust this value to move more to the right
-
-  // Calculate the position to align the top edge of the plane with yTop
+  const xPos = 140;
   const yPosition = yTop - planeHeight / 2;
 
-  // Update plane geometry and position
   if (lightningPlane) {
     lightningPlane.geometry.dispose();
     lightningPlane.geometry = new TR.PlaneGeometry(planeWidth, planeHeight);
@@ -191,7 +215,7 @@ window.addEventListener('resize', () => {
   camera.right = d * aspect;
   camera.updateProjectionMatrix();
 
-  updateLightningPlane(); // Update lightning plane on resize
+  updateLightningPlane();
 });
 
 window.addEventListener('keydown', (event) => {
@@ -209,8 +233,8 @@ window.addEventListener('keydown', (event) => {
     firstSound.play();
 
     setTimeout(() => {
-      const fadeDuration = 300; // Duration of fade-out in milliseconds
-      const fadeSteps = 10; // Number of steps for smooth fade-out
+      const fadeDuration = 300;
+      const fadeSteps = 10;
       const fadeInterval = fadeDuration / fadeSteps;
 
       let volumeStep = firstSound.volume / fadeSteps;
@@ -220,11 +244,11 @@ window.addEventListener('keydown', (event) => {
         if (firstSound.volume === 0) {
           clearInterval(fadeOut);
           firstSound.pause();
-          firstSound.currentTime = 0; // Reset to beginning if needed
-          firstSound.volume = 1; // Reset volume for next playback
+          firstSound.currentTime = 0;
+          firstSound.volume = 1;
         }
       }, fadeInterval);
-    }, 1500); // Start fade-out after 2 seconds
+    }, 1500);
 
     setTimeout(() => {
       secondSound.play();
@@ -238,17 +262,16 @@ window.addEventListener('keydown', (event) => {
       }
     });
 
-    // Darken the background by 90%
     if (backgroundMaterial) {
       backgroundMaterial.color.setRGB(0.1, 0.1, 0.1);
     }
     setTimeout(() => {
       if (lightningPlane && model) {
         lightningPlane.visible = true;
-        currentFrame = 0; // Reset animation
+        currentFrame = 0;
         lastFrameTime = Date.now();
 
-        updateLightningPlane(); // Update plane position and size
+        updateLightningPlane();
       }
     }, 1000);
   }
