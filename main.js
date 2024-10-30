@@ -36,8 +36,10 @@ textureLoader.load('assets/snow.png', (texture) => {
 });
 
 let mixer, idleAction, attackAction, mixerCobold, coboldIdleAction, hitAction;
-let model;
+let model, model2;
 const gltfLoader = new GLTFLoader();
+
+// Load the hero model (Fulmen)
 gltfLoader.load(
   'assets/fulmen/fulmen.gltf',
   (gltf) => {
@@ -66,23 +68,23 @@ gltfLoader.load(
   },
   undefined,
   (error) => {
-    console.error('Error loading model:', error);
+    console.error('Error loading hero model:', error);
   }
 );
 
-// kobold
-
+// Load the kobold (goblin) model
 gltfLoader.load(
   'assets/kobold/6be5470731a44b14af4cbd44aeaace23_Textured.gltf',
   (gltf) => {
-    const model2 = gltf.scene;
-    model2.position.set(150, -60, 0);
+    model2 = gltf.scene;
+    model2.position.set(145, -55, 0);
     model2.scale.set(10, 10, 10);
     model2.rotation.y = -Math.PI * 0.8;
 
     model2.traverse((node) => {
       if (node.isMesh) {
         node.material = new TR.MeshBasicMaterial({ map: node.material.map });
+        node.userData.originalMaterial = node.material.clone(); // Save original material
       }
     });
 
@@ -91,7 +93,7 @@ gltfLoader.load(
     mixerCobold = new TR.AnimationMixer(model2);
 
     const idleClip = gltf.animations.find((clip) => clip.name.toLowerCase().includes('idle'));
-    coboldIdleAction = mixer.clipAction(idleClip);
+    coboldIdleAction = mixerCobold.clipAction(idleClip);
     coboldIdleAction.play();
 
     const hitClip = gltf.animations.find((clip) => clip.name.toLowerCase().includes('deth'));
@@ -101,7 +103,7 @@ gltfLoader.load(
   },
   undefined,
   (error) => {
-    console.error('Error loading model:', error);
+    console.error('Error loading kobold model:', error);
   }
 );
 
@@ -255,7 +257,29 @@ window.addEventListener('resize', () => {
 });
 
 window.addEventListener('keydown', (event) => {
+  if (event.key === 'r' && mixerCobold && coboldIdleAction) {
+    // Resurrect the goblin and play idle animation
+    hitAction.reset().play();
+    coboldIdleAction.reset().play();
+
+    // Reset the goblin's material to original
+    model2.traverse((node) => {
+      if (node.isMesh && node.userData.originalMaterial) {
+        node.material.copy(node.userData.originalMaterial);
+      }
+    });
+  }
+
   if (event.key === 'q' && attackAction && idleAction) {
+    setTimeout(() => {
+      // Start the kobold's 'deth' animation after the lightning finishes
+      if (hitAction && coboldIdleAction) {
+        flashModelWhite(model2, 500); // Flash duration in milliseconds
+        coboldIdleAction.fadeOut(0.1);
+        hitAction.reset().fadeIn(0.1).play();
+      }
+    }, 1300);
+
     idleAction.fadeOut(0.1);
     attackAction.reset().fadeIn(0.1).play();
 
@@ -298,14 +322,6 @@ window.addEventListener('keydown', (event) => {
       }
     });
 
-    mixerCobold.addEventListener('finished', function restoreIdle(e) {
-      if (e.action === hitAction) {
-        mixerCobold.removeEventListener('finished', restoreIdle);
-        hitAction.stop();
-        coboldIdleAction.reset().fadeIn(0.1).play();
-      }
-    });
-
     if (backgroundMaterial) {
       backgroundMaterial.color.setRGB(0.1, 0.1, 0.1);
     }
@@ -320,3 +336,23 @@ window.addEventListener('keydown', (event) => {
     }, 1000);
   }
 });
+
+// Function to flash the model white
+function flashModelWhite(model, duration) {
+  const flashMaterial = new TR.MeshBasicMaterial({ color: 0xffffff });
+  const originalMaterials = [];
+
+  model.traverse((node) => {
+    if (node.isMesh) {
+      originalMaterials.push({ mesh: node, material: node.material });
+      node.material = flashMaterial;
+    }
+  });
+
+  setTimeout(() => {
+    // Restore original materials
+    originalMaterials.forEach(({ mesh, material }) => {
+      mesh.material = material;
+    });
+  }, duration);
+}
