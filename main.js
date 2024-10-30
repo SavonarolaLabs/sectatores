@@ -35,7 +35,7 @@ textureLoader.load('assets/snow.png', (texture) => {
   backgroundScene.add(backgroundPlane);
 });
 
-let mixer, idleAction, attackAction;
+let mixer, idleAction, attackAction, mixerCobold, coboldIdleAction, hitAction;
 let model;
 const gltfLoader = new GLTFLoader();
 gltfLoader.load(
@@ -63,6 +63,41 @@ gltfLoader.load(
     attackAction = mixer.clipAction(attackClip);
     attackAction.loop = TR.LoopOnce;
     attackAction.clampWhenFinished = true;
+  },
+  undefined,
+  (error) => {
+    console.error('Error loading model:', error);
+  }
+);
+
+// kobold
+
+gltfLoader.load(
+  'assets/kobold/6be5470731a44b14af4cbd44aeaace23_Textured.gltf',
+  (gltf) => {
+    const model2 = gltf.scene;
+    model2.position.set(150, -60, 0);
+    model2.scale.set(10, 10, 10);
+    model2.rotation.y = -Math.PI * 0.8;
+
+    model2.traverse((node) => {
+      if (node.isMesh) {
+        node.material = new TR.MeshBasicMaterial({ map: node.material.map });
+      }
+    });
+
+    scene.add(model2);
+
+    mixerCobold = new TR.AnimationMixer(model2);
+
+    const idleClip = gltf.animations.find((clip) => clip.name.toLowerCase().includes('idle'));
+    coboldIdleAction = mixer.clipAction(idleClip);
+    coboldIdleAction.play();
+
+    const hitClip = gltf.animations.find((clip) => clip.name.toLowerCase().includes('deth'));
+    hitAction = mixerCobold.clipAction(hitClip);
+    hitAction.loop = TR.LoopOnce;
+    hitAction.clampWhenFinished = true;
   },
   undefined,
   (error) => {
@@ -135,6 +170,7 @@ const clock = new TR.Clock();
 renderer.setAnimationLoop(() => {
   const delta = clock.getDelta();
   if (mixer) mixer.update(delta);
+  if (mixerCobold) mixerCobold.update(delta);
 
   renderer.autoClear = false;
   renderer.clear();
@@ -229,7 +265,7 @@ window.addEventListener('keydown', (event) => {
     const firstSound = new Audio('assets/lightning-eyes.mp3');
     const secondSound = new Audio('assets/electric-shock-sound-effect.mp3');
 
-    firstSound.currentTime = 0.8;
+    firstSound.currentTime = 1;
     firstSound.play();
 
     setTimeout(() => {
@@ -259,6 +295,14 @@ window.addEventListener('keydown', (event) => {
         mixer.removeEventListener('finished', restoreIdle);
         attackAction.stop();
         idleAction.reset().fadeIn(0.1).play();
+      }
+    });
+
+    mixerCobold.addEventListener('finished', function restoreIdle(e) {
+      if (e.action === hitAction) {
+        mixerCobold.removeEventListener('finished', restoreIdle);
+        hitAction.stop();
+        coboldIdleAction.reset().fadeIn(0.1).play();
       }
     });
 
