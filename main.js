@@ -107,6 +107,49 @@ gltfLoader.load(
   }
 );
 
+// Small lightning animation setup
+
+const smallLigtning = {
+  sprite: 'assets/LightningFreePack/512/Lightning_2_512-sheet.png',
+  w: 4,
+  h: 4,
+  totalFrames: 4 * 4,
+  currentFrame: 0,
+  texture: undefined, //TR.Texture
+  plane: undefined,
+};
+
+textureLoader.load(smallLigtning.sprite, (texture) => {
+  console.log('aaa');
+
+  // @ts-ignore
+  smallLigtning.texture = texture;
+  smallLigtning.texture.encoding = TR.sRGBEncoding;
+  smallLigtning.texture.wrapS = TR.ClampToEdgeWrapping;
+  smallLigtning.texture.wrapT = TR.ClampToEdgeWrapping;
+  smallLigtning.texture.minFilter = TR.NearestFilter;
+  smallLigtning.texture.magFilter = TR.NearestFilter;
+  smallLigtning.texture.generateMipmaps = false;
+
+  smallLigtning.texture.repeat.set(1 / smallLigtning.w, 1 / smallLigtning.h);
+  const lightningMaterial = new TR.MeshBasicMaterial({
+    map: smallLigtning.texture,
+    transparent: true,
+    side: TR.DoubleSide,
+    depthTest: false,
+  });
+
+  // @ts-ignore
+  smallLigtning.plane = new TR.Mesh(new TR.PlaneGeometry(30, 30), lightningMaterial);
+  // @ts-ignore
+  smallLigtning.plane.visible = false;
+  // @ts-ignore
+  smallLigtning.plane.renderOrder = 999;
+
+  // @ts-ignore
+  scene.add(smallLigtning.plane);
+});
+
 // Lightning animation setup
 let lightningPlane, lightningTexture;
 let currentFrame = 0;
@@ -115,6 +158,7 @@ const totalFrames = 30;
 const frameChangeInterval = 50;
 
 textureLoader.load('assets/lightning.png', (texture) => {
+  console.log('bbb');
   lightningTexture = texture;
   lightningTexture.encoding = TR.sRGBEncoding;
   lightningTexture.wrapS = TR.ClampToEdgeWrapping;
@@ -180,6 +224,36 @@ renderer.setAnimationLoop(() => {
   renderer.render(scene, camera);
 
   // Update lightning frame
+  if (smallLigtning.plane && smallLigtning.plane.visible) {
+    const currentTime = Date.now();
+    if (currentTime - lastFrameTime >= frameChangeInterval) {
+      lastFrameTime = currentTime;
+      const frameWidth = 1 / smallLigtning.w;
+      const frameHeight = 1 / smallLigtning.h;
+
+      const col = smallLigtning.currentFrame % smallLigtning.w;
+      const row = Math.floor(smallLigtning.currentFrame / smallLigtning.w) % smallLigtning.h;
+
+      const epsilonX = 0.0005;
+      const epsilonY = 0.0005;
+
+      lightningTexture.offset.x = col * frameWidth + epsilonX;
+      lightningTexture.offset.y = 1 - (row + 1) * frameHeight + epsilonY;
+      lightningTexture.repeat.set(frameWidth - 2 * epsilonX, frameHeight - 2 * epsilonY);
+
+      smallLigtning.currentFrame++;
+      if (smallLigtning.currentFrame >= smallLigtning.totalFrames) {
+        smallLigtning.plane.visible = false;
+        smallLigtning.currentFrame = 0;
+
+        //if (backgroundMaterial) {
+        //  backgroundMaterial.color.setRGB(1, 1, 1);
+        //}
+      }
+    }
+  }
+
+  // Update lightning frame
   if (lightningPlane && lightningPlane.visible) {
     const currentTime = Date.now();
     if (currentTime - lastFrameTime >= frameChangeInterval) {
@@ -220,6 +294,30 @@ renderer.setAnimationLoop(() => {
   }
 });
 
+function updateSmallLightningPlane() {
+  const d = MAP_SIZE * 2;
+  aspect = window.innerWidth / window.innerHeight;
+
+  const yTop = 83;
+  const planeHeight = (2 / 3) * (2 * d);
+
+  // @ts-ignore
+  const textureAspect = smallLigtning.texture.image.width / smallLigtning.w / (smallLigtning.texture.image.height / smallLigtning.h);
+  const planeWidth = planeHeight * textureAspect;
+
+  const xPos = 140;
+  const yPosition = yTop - planeHeight / 2;
+
+  // @ts-ignore
+  smallLigtning.plane.geometry.dispose();
+  // @ts-ignore
+  smallLigtning.plane.geometry = new TR.PlaneGeometry(planeWidth, planeHeight);
+  // @ts-ignore
+  smallLigtning.plane.position.set(xPos, yPosition, 0);
+  // @ts-ignore
+  smallLigtning.plane.quaternion.copy(camera.quaternion);
+}
+
 function updateLightningPlane() {
   const d = MAP_SIZE * 2;
   aspect = window.innerWidth / window.innerHeight;
@@ -254,6 +352,7 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
 
   updateLightningPlane();
+  updateSmallLightningPlane();
 });
 
 window.addEventListener('keydown', (event) => {
@@ -270,6 +369,9 @@ window.addEventListener('keydown', (event) => {
     });
   }
 
+  if (event.key === 'w' && attackAction && idleAction) {
+    smallLigtning.plane.visible = true;
+  }
   if (event.key === 'q' && attackAction && idleAction) {
     setTimeout(() => {
       // Start the kobold's 'deth' animation after the lightning finishes
