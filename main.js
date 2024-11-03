@@ -36,6 +36,31 @@ controls.dampingFactor = 0.05;
 controls.enablePan = false;
 controls.minZoom = 0.5;
 controls.maxZoom = 5;
+camera.zoom = 3.5; // Adjust this value for your desired initial zoom level
+
+loadCameraSettings();
+camera.updateProjectionMatrix();
+
+controls.addEventListener('change', saveCameraSettings);
+
+function saveCameraSettings() {
+  const cameraSettings = {
+    position: camera.position.toArray(),
+    zoom: camera.zoom,
+    target: controls.target.toArray(), // Save the OrbitControls target
+  };
+  localStorage.setItem('cameraSettings', JSON.stringify(cameraSettings));
+}
+
+function loadCameraSettings() {
+  const savedSettings = JSON.parse(localStorage.getItem('cameraSettings'));
+  if (savedSettings) {
+    camera.position.fromArray(savedSettings.position);
+    camera.zoom = savedSettings.zoom;
+    camera.updateProjectionMatrix();
+    controls.target.fromArray(savedSettings.target); // Load the OrbitControls target
+  }
+}
 
 // Background Setup
 const backgroundScene = new TR.Scene();
@@ -184,14 +209,14 @@ const characterConfigs = [
   // Hero
   {
     name: 'ally1',
-    path: gltfModels[allyModelIndex],
+    path: gltfModels[5],
     position: { x: -posX, y: 0, z: -columnSpacing },
     scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: Math.PI / 2 },
   },
   {
     name: 'ally2',
-    path: gltfModels[allyModelIndex],
+    path: gltfModels[5],
     position: { x: -posX, y: 0, z: 0 },
     scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: Math.PI / 2 },
@@ -200,14 +225,14 @@ const characterConfigs = [
     name: 'hero',
     path: 'assets/fulmen/fulmen.gltf',
     position: { x: -posX, y: 0, z: columnSpacing },
-    scale: { x: 4, y: 4, z: 4 },
+    scale: { x: 3, y: 3, z: 3 },
     rotation: { y: Math.PI / 2 },
   },
   {
     name: 'ally4',
-    path: gltfModels[allyModelIndex],
+    path: gltfModels[9],
     position: { x: -posX - rowSpacing, y: 0, z: -columnSpacing },
-    scale: { x: modelScale, y: modelScale, z: modelScale },
+    scale: { x: modelScale * 0.5, y: modelScale * 0.5, z: modelScale * 0.5 },
     rotation: { y: Math.PI / 2 },
   },
   {
