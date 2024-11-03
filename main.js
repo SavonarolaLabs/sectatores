@@ -35,7 +35,7 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.05;
 controls.enablePan = false;
 controls.minZoom = 0.5;
-controls.maxZoom = 2;
+controls.maxZoom = 5;
 
 // Background Setup
 const backgroundScene = new TR.Scene();
@@ -162,22 +162,6 @@ function cloneGltf(gltf) {
   return clone;
 }
 
-// Enemy positions
-const enemyPositions = [
-  {
-    position: { x: 145, y: -55, z: 0 },
-    rotation: { y: -Math.PI * 0.8 },
-  },
-  {
-    position: { x: 160, y: -50, z: 20 },
-    rotation: { y: -Math.PI * 0.6 },
-  },
-  {
-    position: { x: 130, y: -60, z: -20 },
-    rotation: { y: -Math.PI * 0.9 },
-  },
-];
-
 renderer.setAnimationLoop(() => {
   const delta = clock.getDelta();
   Object.values(mixers).forEach((mixer) => mixer.update(delta));
@@ -191,99 +175,96 @@ renderer.setAnimationLoop(() => {
   renderer.render(scene, camera);
 });
 
+const posX = 12;
+const rowSpacing = 15; // Distance between rows
+const columnSpacing = 15; // Distance between units in a row
+
 // Character configurations
 const characterConfigs = [
   // Hero
   {
-    name: 'hero',
-    path: 'assets/fulmen/fulmen.gltf',
-    position: { x: -70, y: 0, z: 0 },
-    scale: { x: modelScale, y: modelScale, z: modelScale },
-    rotation: { y: Math.PI / 2 },
-  },
-  // Allies (6 allies)
-  {
     name: 'ally1',
     path: gltfModels[allyModelIndex],
-    position: { x: -50, y: 0, z: -50 },
+    position: { x: -posX, y: 0, z: -columnSpacing },
     scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: Math.PI / 2 },
   },
   {
     name: 'ally2',
     path: gltfModels[allyModelIndex],
-    position: { x: -50, y: 0, z: -30 },
+    position: { x: -posX, y: 0, z: 0 },
     scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: Math.PI / 2 },
   },
   {
-    name: 'ally3',
-    path: gltfModels[allyModelIndex],
-    position: { x: -50, y: 0, z: -10 },
-    scale: { x: modelScale, y: modelScale, z: modelScale },
+    name: 'hero',
+    path: 'assets/fulmen/fulmen.gltf',
+    position: { x: -posX, y: 0, z: columnSpacing },
+    scale: { x: 4, y: 4, z: 4 },
     rotation: { y: Math.PI / 2 },
   },
   {
     name: 'ally4',
     path: gltfModels[allyModelIndex],
-    position: { x: -50, y: 0, z: modelScale },
+    position: { x: -posX - rowSpacing, y: 0, z: -columnSpacing },
     scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: Math.PI / 2 },
   },
   {
     name: 'ally5',
     path: gltfModels[allyModelIndex],
-    position: { x: -50, y: 0, z: 30 },
+    position: { x: -posX - rowSpacing, y: 0, z: 0 },
     scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: Math.PI / 2 },
   },
   {
     name: 'ally6',
     path: gltfModels[allyModelIndex],
-    position: { x: -50, y: 0, z: 50 },
+    position: { x: -posX - rowSpacing, y: 0, z: columnSpacing },
     scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: Math.PI / 2 },
   },
-  // Enemies (6 enemies)
+
+  // Enemies (6 enemies in two rows)
   {
     name: 'enemy1',
     path: gltfModels[enemyModelIndex],
-    position: { x: 50, y: 0, z: -50 },
+    position: { x: posX, y: 0, z: -columnSpacing },
     scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: -Math.PI / 2 },
   },
   {
     name: 'enemy2',
     path: gltfModels[enemyModelIndex],
-    position: { x: 50, y: 0, z: -30 },
+    position: { x: posX, y: 0, z: 0 },
     scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: -Math.PI / 2 },
   },
   {
     name: 'enemy3',
     path: gltfModels[enemyModelIndex],
-    position: { x: 50, y: 0, z: -10 },
+    position: { x: posX, y: 0, z: columnSpacing },
     scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: -Math.PI / 2 },
   },
   {
     name: 'enemy4',
     path: gltfModels[enemyModelIndex],
-    position: { x: 50, y: 0, z: 10 },
+    position: { x: posX + rowSpacing, y: 0, z: -columnSpacing },
     scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: -Math.PI / 2 },
   },
   {
     name: 'enemy5',
     path: gltfModels[enemyModelIndex],
-    position: { x: 50, y: 0, z: 30 },
+    position: { x: posX + rowSpacing, y: 0, z: 0 },
     scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: -Math.PI / 2 },
   },
   {
     name: 'enemy6',
     path: gltfModels[enemyModelIndex],
-    position: { x: 50, y: 0, z: 50 },
+    position: { x: posX + rowSpacing, y: 0, z: columnSpacing },
     scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: -Math.PI / 2 },
   },
