@@ -201,52 +201,54 @@ renderer.setAnimationLoop(() => {
   renderer.render(scene, camera);
 });
 
-const posX = 12;
-const rowSpacing = 15; // Distance between rows
+const offsetX = 8.5;
+const offsetZ = 11;
+
+const posX = 9;
+const rowSpacing = 12; // Distance between rows
 const columnSpacing = 15; // Distance between units in a row
 
 // Character configurations
 const characterConfigs = [
-  // Hero
   {
     name: 'ally1',
     path: gltfModels[11],
-    position: { x: -posX, y: 0, z: -columnSpacing },
+    position: { x: -posX + offsetX, y: 0, z: -columnSpacing + offsetZ },
     scale: { x: modelScale * 0.5, y: modelScale * 0.5, z: modelScale * 0.5 },
     rotation: { y: Math.PI / 2 },
   },
   {
     name: 'ally2',
     path: gltfModels[5],
-    position: { x: -posX, y: 0, z: 0 },
+    position: { x: -posX + offsetX, y: 0, z: 0 + offsetZ },
     scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: Math.PI / 2 },
   },
   {
     name: 'hero',
     path: 'assets/fulmen/fulmen.gltf',
-    position: { x: -posX, y: 0, z: columnSpacing },
+    position: { x: -posX + offsetX, y: 0, z: columnSpacing + offsetZ },
     scale: { x: 3, y: 3, z: 3 },
     rotation: { y: Math.PI / 2 },
   },
   {
     name: 'ally4',
     path: gltfModels[9],
-    position: { x: -posX - rowSpacing, y: 0, z: -columnSpacing },
+    position: { x: -posX - rowSpacing + offsetX, y: 0, z: -columnSpacing + offsetZ },
     scale: { x: modelScale * 0.5, y: modelScale * 0.5, z: modelScale * 0.5 },
     rotation: { y: Math.PI / 2 },
   },
   {
     name: 'ally5',
     path: gltfModels[10],
-    position: { x: -posX - rowSpacing, y: 0, z: 0 },
+    position: { x: -posX - rowSpacing + offsetX, y: 0, z: 0 + offsetZ },
     scale: { x: modelScale * 0.4, y: modelScale * 0.4, z: modelScale * 0.4 },
     rotation: { y: Math.PI / 2 },
   },
   {
     name: 'ally6',
     path: gltfModels[22],
-    position: { x: -posX - rowSpacing, y: 0, z: columnSpacing },
+    position: { x: -posX - rowSpacing + offsetX, y: 0, z: columnSpacing + offsetZ },
     scale: { x: modelScale * 1.2, y: modelScale * 1.2, z: modelScale * 1.2 },
     rotation: { y: Math.PI / 2 },
   },
@@ -255,42 +257,42 @@ const characterConfigs = [
   {
     name: 'enemy1',
     path: gltfModels[14],
-    position: { x: posX, y: 0, z: -columnSpacing },
+    position: { x: posX + offsetX, y: 0, z: -columnSpacing + offsetZ },
     scale: { x: modelScale * 80, y: modelScale * 80, z: modelScale * 80 },
     rotation: { y: -Math.PI / 2 },
   },
   {
     name: 'enemy2',
     path: gltfModels[17],
-    position: { x: posX, y: 0, z: 0 },
+    position: { x: posX + offsetX, y: 0, z: 0 + offsetZ },
     scale: { x: modelScale * 50, y: modelScale * 50, z: modelScale * 50 },
     rotation: { y: -Math.PI / 2 },
   },
   {
     name: 'enemy3',
     path: gltfModels[enemyModelIndex],
-    position: { x: posX, y: 0, z: columnSpacing },
+    position: { x: posX + offsetX, y: 0, z: columnSpacing + offsetZ },
     scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: -Math.PI / 2 },
   },
   {
     name: 'enemy4',
     path: gltfModels[enemyModelIndex],
-    position: { x: posX + rowSpacing, y: 0, z: -columnSpacing },
+    position: { x: posX + rowSpacing + offsetX, y: 0, z: -columnSpacing + offsetZ },
     scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: -Math.PI / 2 },
   },
   {
     name: 'enemy5',
     path: gltfModels[enemyModelIndex],
-    position: { x: posX + rowSpacing, y: 0, z: 0 },
+    position: { x: posX + rowSpacing + offsetX, y: 0, z: 0 + offsetZ },
     scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: -Math.PI / 2 },
   },
   {
     name: 'enemy6',
     path: gltfModels[enemyModelIndex],
-    position: { x: posX + rowSpacing, y: 0, z: columnSpacing },
+    position: { x: posX + rowSpacing + offsetX, y: 0, z: columnSpacing + offsetZ },
     scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: -Math.PI / 2 },
   },
