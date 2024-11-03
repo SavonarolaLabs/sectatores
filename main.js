@@ -210,9 +210,9 @@ const characterConfigs = [
   // Hero
   {
     name: 'ally1',
-    path: gltfModels[5],
+    path: gltfModels[11],
     position: { x: -posX, y: 0, z: -columnSpacing },
-    scale: { x: modelScale, y: modelScale, z: modelScale },
+    scale: { x: modelScale * 0.5, y: modelScale * 0.5, z: modelScale * 0.5 },
     rotation: { y: Math.PI / 2 },
   },
   {
@@ -238,32 +238,32 @@ const characterConfigs = [
   },
   {
     name: 'ally5',
-    path: gltfModels[allyModelIndex],
+    path: gltfModels[10],
     position: { x: -posX - rowSpacing, y: 0, z: 0 },
-    scale: { x: modelScale, y: modelScale, z: modelScale },
+    scale: { x: modelScale * 0.4, y: modelScale * 0.4, z: modelScale * 0.4 },
     rotation: { y: Math.PI / 2 },
   },
   {
     name: 'ally6',
-    path: gltfModels[allyModelIndex],
+    path: gltfModels[22],
     position: { x: -posX - rowSpacing, y: 0, z: columnSpacing },
-    scale: { x: modelScale, y: modelScale, z: modelScale },
+    scale: { x: modelScale * 1.2, y: modelScale * 1.2, z: modelScale * 1.2 },
     rotation: { y: Math.PI / 2 },
   },
 
   // Enemies (6 enemies in two rows)
   {
     name: 'enemy1',
-    path: gltfModels[enemyModelIndex],
+    path: gltfModels[14],
     position: { x: posX, y: 0, z: -columnSpacing },
-    scale: { x: modelScale, y: modelScale, z: modelScale },
+    scale: { x: modelScale * 80, y: modelScale * 80, z: modelScale * 80 },
     rotation: { y: -Math.PI / 2 },
   },
   {
     name: 'enemy2',
-    path: gltfModels[enemyModelIndex],
+    path: gltfModels[17],
     position: { x: posX, y: 0, z: 0 },
-    scale: { x: modelScale, y: modelScale, z: modelScale },
+    scale: { x: modelScale * 50, y: modelScale * 50, z: modelScale * 50 },
     rotation: { y: -Math.PI / 2 },
   },
   {
