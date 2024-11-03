@@ -77,6 +77,19 @@ function createLightningSpell() {
 
       setTimeout(() => {
         flashModelWhite('enemy1', 300);
+        console.log(enemyActions);
+        if (enemyActions.hit && enemyActions.idle) {
+          enemyActions.idle.fadeOut(0.1);
+          enemyActions.hit.reset().fadeIn(0.1).play();
+
+          mixers.enemy1.addEventListener('finished', function restoreIdle(e) {
+            if (e.action === enemyActions.hit) {
+              mixers.enemy1.removeEventListener('finished', restoreIdle);
+              enemyActions.hit.stop();
+              enemyActions.idle.reset().fadeIn(0.1).play();
+            }
+          });
+        }
       }, 1200);
 
       if (heroActions.attack && heroActions.idle) {

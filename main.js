@@ -151,6 +151,7 @@ function loadModel(name, path, options = {}) {
 
         const modelActions = {};
         gltf.animations.forEach((clip) => {
+          console.log(clip.name.toLowerCase());
           const action = mixer.clipAction(clip);
           if (clip.name.toLowerCase().includes('idle')) {
             modelActions.idle = action;
@@ -159,8 +160,12 @@ function loadModel(name, path, options = {}) {
             modelActions.attack = action;
             action.loop = TR.LoopOnce;
             action.clampWhenFinished = true;
-          } else if (clip.name.toLowerCase().includes('deth')) {
+          } else if (['deth', 'death'].some((a) => clip.name.toLowerCase().includes(a))) {
             modelActions.death = action;
+            action.loop = TR.LoopOnce;
+            action.clampWhenFinished = true;
+          } else if (['hurt', 'hit', 'stun', 'knockback', 'impact'].some((a) => clip.name.toLowerCase().includes(a))) {
+            modelActions.hit = action;
             action.loop = TR.LoopOnce;
             action.clampWhenFinished = true;
           }
