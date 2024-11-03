@@ -59,6 +59,7 @@ function loadCameraSettings() {
     camera.zoom = savedSettings.zoom;
     camera.updateProjectionMatrix();
     controls.target.fromArray(savedSettings.target); // Load the OrbitControls target
+    controls.update(); // Add this line to update the controls
   }
 }
 
