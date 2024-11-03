@@ -74,8 +74,8 @@ export function createSpriteEffect(options, textureLoader, scene, camera, TR, MA
         // Update plane position to match the target model
         plane.position.copy(targetModel.position);
 
-        // Make the plane face the camera
-        plane.lookAt(camera.position);
+        // Make the plane face the camera without rotation
+        plane.quaternion.copy(camera.quaternion);
       }
     },
   };

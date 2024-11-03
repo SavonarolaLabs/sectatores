@@ -57,7 +57,7 @@ function createLightningSpell() {
       columns: 6,
       rows: 5,
       totalFrames: 30,
-      planeSize: { width: 5, height: 10 }, // Adjust the size as needed
+      planeSize: { width: 15, height: 30 }, // Adjust the size as needed
       targetModel: targetEnemy,
     },
     textureLoader,
