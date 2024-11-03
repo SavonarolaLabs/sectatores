@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createSpriteEffect } from './spells';
 import { initializeSpells, spellManager } from './initSpells';
 import { gltfModels } from './gltfModels';
+import { OrbitControls } from 'three/examples/jsm/Addons.js';
 
 const MAP_SIZE = 48;
 
@@ -27,6 +28,14 @@ camera.position.set(MAP_SIZE, MAP_SIZE, MAP_SIZE);
 camera.rotation.order = 'YXZ';
 camera.rotation.y = -Math.PI / 4;
 camera.rotation.x = -angle;
+
+// Add OrbitControls
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.enablePan = false;
+controls.minZoom = 0.5;
+controls.maxZoom = 2;
 
 // Background Setup
 const backgroundScene = new TR.Scene();
@@ -168,75 +177,6 @@ const enemyPositions = [
     rotation: { y: -Math.PI * 0.9 },
   },
 ];
-
-// Load models
-let koboldGLTF = null;
-
-Promise.all([
-  loadModel('hero', 'assets/fulmen/fulmen.gltf', {
-    position: { x: 0, y: 0, z: 0 },
-    scale: { x: modelScale, y: modelScale, z: modelScale },
-  }),
-  new Promise((resolve, reject) => {
-    gltfLoader.load(
-      'assets/kobold/6be5470731a44b14af4cbd44aeaace23_Textured.gltf',
-      (gltf) => {
-        koboldGLTF = gltf;
-        resolve();
-      },
-      undefined,
-      (error) => {
-        console.error('Error loading kobold model:', error);
-        reject(error);
-      }
-    );
-  }),
-]).then(() => {
-  // Clone kobold model for each enemy
-  enemyPositions.forEach((options, index) => {
-    const name = `kobold${index + 1}`;
-    const clonedGltf = cloneGltf(koboldGLTF);
-    const model = clonedGltf.scene;
-
-    model.position.set(options.position.x, options.position.y, options.position.z);
-    model.scale.set(10, 10, 10);
-    model.rotation.y = options.rotation.y;
-
-    model.traverse((node) => {
-      if (node.isMesh) {
-        node.material = new TR.MeshBasicMaterial({ map: node.material.map });
-        node.userData.originalMaterial = node.material.clone();
-      }
-    });
-
-    scene.add(model);
-
-    const mixer = new TR.AnimationMixer(model);
-    mixers[name] = mixer;
-
-    const modelActions = {};
-    clonedGltf.animations.forEach((clip) => {
-      const action = mixer.clipAction(clip);
-      if (clip.name.toLowerCase().includes('idle')) {
-        modelActions.idle = action;
-        action.play();
-      } else if (clip.name.toLowerCase().includes('attack')) {
-        modelActions.attack = action;
-        action.loop = TR.LoopOnce;
-        action.clampWhenFinished = true;
-      } else if (clip.name.toLowerCase().includes('deth')) {
-        modelActions.death = action;
-        action.loop = TR.LoopOnce;
-        action.clampWhenFinished = true;
-      }
-    });
-    actions[name] = modelActions;
-    models[name] = model;
-  });
-
-  // Initialize spells
-  initializeSpells(textureLoader, scene, camera, TR, MAP_SIZE, backgroundMaterial, actions, mixers, models);
-});
 
 renderer.setAnimationLoop(() => {
   const delta = clock.getDelta();
