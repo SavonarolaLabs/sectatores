@@ -102,19 +102,133 @@ function loadModel(name, path, options = {}) {
   );
 }
 
+// Function to properly clone a GLTF model with animations
+function cloneGltf(gltf) {
+  const clone = {
+    animations: gltf.animations.map((animation) => animation.clone()),
+    scene: gltf.scene.clone(true),
+  };
+
+  const skinnedMeshes = {};
+
+  gltf.scene.traverse(function (node) {
+    if (node.isSkinnedMesh) {
+      skinnedMeshes[node.name] = node;
+    }
+  });
+
+  const cloneBones = {};
+  const cloneSkinnedMeshes = {};
+
+  clone.scene.traverse(function (node) {
+    if (node.isBone) {
+      cloneBones[node.name] = node;
+    }
+    if (node.isSkinnedMesh) {
+      cloneSkinnedMeshes[node.name] = node;
+    }
+  });
+
+  for (let name in skinnedMeshes) {
+    const skinnedMesh = skinnedMeshes[name];
+    const skeleton = skinnedMesh.skeleton;
+    const cloneSkinnedMesh = cloneSkinnedMeshes[name];
+
+    const orderedCloneBones = [];
+
+    for (let i = 0; i < skeleton.bones.length; ++i) {
+      const cloneBone = cloneBones[skeleton.bones[i].name];
+      orderedCloneBones.push(cloneBone);
+    }
+
+    cloneSkinnedMesh.bind(new TR.Skeleton(orderedCloneBones, skeleton.boneInverses), cloneSkinnedMesh.matrixWorld);
+  }
+
+  return clone;
+}
+
+// Enemy positions
+const enemyPositions = [
+  {
+    position: { x: 145, y: -55, z: 0 },
+    rotation: { y: -Math.PI * 0.8 },
+  },
+  {
+    position: { x: 160, y: -50, z: 20 },
+    rotation: { y: -Math.PI * 0.6 },
+  },
+  {
+    position: { x: 130, y: -60, z: -20 },
+    rotation: { y: -Math.PI * 0.9 },
+  },
+];
+
 // Load models
+let koboldGLTF = null;
+
 Promise.all([
   loadModel('hero', 'assets/fulmen/fulmen.gltf', {
     position: { x: 0, y: 0, z: 0 },
     scale: { x: 10, y: 10, z: 10 },
   }),
-  loadModel('kobold', 'assets/kobold/6be5470731a44b14af4cbd44aeaace23_Textured.gltf', {
-    position: { x: 145, y: -55, z: 0 },
-    scale: { x: 10, y: 10, z: 10 },
-    rotation: { y: -Math.PI * 0.8 },
+  new Promise((resolve, reject) => {
+    gltfLoader.load(
+      'assets/kobold/6be5470731a44b14af4cbd44aeaace23_Textured.gltf',
+      (gltf) => {
+        koboldGLTF = gltf;
+        resolve();
+      },
+      undefined,
+      (error) => {
+        console.error('Error loading kobold model:', error);
+        reject(error);
+      }
+    );
   }),
 ]).then(() => {
-  // All models loaded, initialize spells here
+  // Clone kobold model for each enemy
+  enemyPositions.forEach((options, index) => {
+    const name = `kobold${index + 1}`;
+    const clonedGltf = cloneGltf(koboldGLTF);
+    const model = clonedGltf.scene;
+
+    model.position.set(options.position.x, options.position.y, options.position.z);
+    model.scale.set(10, 10, 10);
+    model.rotation.y = options.rotation.y;
+
+    model.traverse((node) => {
+      if (node.isMesh) {
+        node.material = new TR.MeshBasicMaterial({ map: node.material.map });
+        node.userData.originalMaterial = node.material.clone();
+      }
+    });
+
+    scene.add(model);
+
+    const mixer = new TR.AnimationMixer(model);
+    mixers[name] = mixer;
+
+    const modelActions = {};
+    clonedGltf.animations.forEach((clip) => {
+      const action = mixer.clipAction(clip);
+      if (clip.name.toLowerCase().includes('idle')) {
+        modelActions.idle = action;
+        action.play();
+      } else if (clip.name.toLowerCase().includes('attack')) {
+        modelActions.attack = action;
+        action.loop = TR.LoopOnce;
+        action.clampWhenFinished = true;
+      } else if (clip.name.toLowerCase().includes('deth')) {
+        modelActions.death = action;
+        action.loop = TR.LoopOnce;
+        action.clampWhenFinished = true;
+      }
+    });
+    actions[name] = modelActions;
+    models[name] = model;
+  });
+
+  // Initialize spells
   initializeSpells(textureLoader, scene, camera, TR, MAP_SIZE, backgroundMaterial, actions, mixers, models);
 });
 
@@ -137,18 +251,22 @@ renderer.setAnimationLoop(() => {
 // Event Listeners
 window.addEventListener('keydown', (event) => {
   if (event.key === 't') {
-    // Resurrect the kobold
-    const koboldActions = actions.kobold;
-    if (koboldActions.death && koboldActions.idle) {
-      koboldActions.death.reset().play();
-      koboldActions.idle.reset().play();
-    }
+    // Resurrect all kobolds
+    Object.keys(models).forEach((name) => {
+      if (name.startsWith('kobold')) {
+        const koboldActions = actions[name];
+        if (koboldActions.death && koboldActions.idle) {
+          koboldActions.death.reset().play();
+          koboldActions.idle.reset().play();
+        }
 
-    // Reset the kobold's material
-    const koboldModel = models.kobold;
-    koboldModel.traverse((node) => {
-      if (node.isMesh && node.userData.originalMaterial) {
-        node.material.copy(node.userData.originalMaterial);
+        // Reset the kobold's material
+        const koboldModel = models[name];
+        koboldModel.traverse((node) => {
+          if (node.isMesh && node.userData.originalMaterial) {
+            node.material.copy(node.userData.originalMaterial);
+          }
+        });
       }
     });
   } else {
