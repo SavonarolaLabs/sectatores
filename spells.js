@@ -1,6 +1,8 @@
+// spells.js
+
 // Effect Creation Functions
 export function createSpriteEffect(options, textureLoader, scene, camera, TR, MAP_SIZE, backgroundMaterial) {
-  const { texturePath, columns, rows, totalFrames, planeSize, position, dynamicSize = false } = options;
+  const { texturePath, columns, rows, totalFrames, planeSize, targetModel, dynamicSize = false } = options;
 
   let plane, texture;
   let currentFrame = 0;
@@ -25,48 +27,14 @@ export function createSpriteEffect(options, textureLoader, scene, camera, TR, MA
       map: texture,
       transparent: true,
       side: TR.DoubleSide,
-      depthTest: false,
+      depthTest: true, // Enable depth testing for proper rendering
     });
 
     plane = new TR.Mesh(new TR.PlaneGeometry(planeSize.width, planeSize.height), material);
     plane.visible = false;
-    plane.renderOrder = 999;
-    plane.position.set(position.x, position.y, position.z);
-    plane.quaternion.copy(camera.quaternion);
-
+    plane.position.copy(targetModel.position);
     scene.add(plane);
-
-    if (dynamicSize) {
-      updatePlaneSizeAndPosition();
-      window.addEventListener('resize', () => {
-        updatePlaneSizeAndPosition();
-      });
-    } else {
-      window.addEventListener('resize', () => {
-        plane.quaternion.copy(camera.quaternion);
-      });
-    }
   });
-
-  function updatePlaneSizeAndPosition() {
-    if (!texture || !texture.image) return;
-
-    const d = MAP_SIZE * 2;
-
-    const yTop = 83;
-    const planeHeight = (2 / 3) * (2 * d);
-
-    const textureAspect = texture.image.width / columns / (texture.image.height / rows);
-    const planeWidth = planeHeight * textureAspect;
-
-    const xPos = position.x;
-    const yPosition = yTop - planeHeight / 2;
-
-    plane.geometry.dispose();
-    plane.geometry = new TR.PlaneGeometry(planeWidth, planeHeight);
-    plane.position.set(xPos, yPosition, 0);
-    plane.quaternion.copy(camera.quaternion);
-  }
 
   return {
     start: () => {
@@ -102,6 +70,12 @@ export function createSpriteEffect(options, textureLoader, scene, camera, TR, MA
             }
           }
         }
+
+        // Update plane position to match the target model
+        plane.position.copy(targetModel.position);
+
+        // Make the plane face the camera
+        plane.lookAt(camera.position);
       }
     },
   };

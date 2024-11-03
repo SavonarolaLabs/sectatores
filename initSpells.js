@@ -1,5 +1,8 @@
+// initSpells.js
+
 import { createSpriteEffect } from './spells';
 
+// Global variables to store the parameters
 let textureLoader;
 let scene;
 let camera;
@@ -21,7 +24,8 @@ export function initializeSpells(textureLoaderParam, sceneParam, cameraParam, TR
   actions = actionsParam;
   mixers = mixersParam;
   models = modelsParam;
-  // Lightning Spell ('Q' key)
+
+  // Lightning Spell ('R' key)
   const lightningSpell = createLightningSpell();
   spellManager.addSpell(lightningSpell);
 
@@ -29,14 +33,15 @@ export function initializeSpells(textureLoaderParam, sceneParam, cameraParam, TR
   const electricShockSpell = createElectricShockSpell();
   spellManager.addSpell(electricShockSpell);
 
-  // Aura Spell ('E' key)
+  // Aura Spell ('D' key)
   const auraSpell = createAuraSpell();
   spellManager.addSpell(auraSpell);
 
-  // New Lightning Spell ('A' key)
+  // Small Lightning Spell ('Q' key)
   const smallLightningSpell = createSmallLightningSpell();
   spellManager.addSpell(smallLightningSpell);
 
+  // Test Lightning Spell ('E' key)
   const testLightningSpell = createTestLightningSpell();
   spellManager.addSpell(testLightningSpell);
 
@@ -45,15 +50,15 @@ export function initializeSpells(textureLoaderParam, sceneParam, cameraParam, TR
 
 // Spell Creation Functions
 function createLightningSpell() {
+  const targetEnemy = models['enemy1'];
   const effect = createSpriteEffect(
     {
       texturePath: 'assets/lightning.png',
       columns: 6,
       rows: 5,
       totalFrames: 30,
-      planeSize: { width: 0, height: 0 }, // Will be calculated dynamically
-      position: { x: 140, y: 0, z: 0 }, // 'y' will be calculated
-      dynamicSize: true,
+      planeSize: { width: 5, height: 10 }, // Adjust the size as needed
+      targetModel: targetEnemy,
     },
     textureLoader,
     scene,
@@ -68,7 +73,7 @@ function createLightningSpell() {
     key: 'r',
     onCast: () => {
       const heroActions = actions.hero;
-      const koboldActions = actions.kobold;
+      const enemyActions = actions.enemy1;
 
       if (heroActions.attack && heroActions.idle) {
         heroActions.idle.fadeOut(0.1);
@@ -84,10 +89,10 @@ function createLightningSpell() {
       }
 
       setTimeout(() => {
-        if (koboldActions.death && koboldActions.idle) {
-          flashModelWhite('kobold', 500);
-          koboldActions.idle.fadeOut(0.1);
-          koboldActions.death.reset().fadeIn(0.1).play();
+        if (enemyActions.death && enemyActions.idle) {
+          flashModelWhite('enemy1', 500);
+          enemyActions.idle.fadeOut(0.1);
+          enemyActions.death.reset().fadeIn(0.1).play();
         }
       }, 1300);
 
@@ -112,14 +117,15 @@ function createLightningSpell() {
 }
 
 function createElectricShockSpell() {
+  const targetEnemy = models['enemy1'];
   const effect = createSpriteEffect(
     {
       texturePath: 'assets/LightningFreePack/512/Lightning_2_512-sheet.png',
       columns: 4,
       rows: 4,
       totalFrames: 16,
-      planeSize: { width: 210, height: 210 },
-      position: { x: 145, y: 15, z: 0 },
+      planeSize: { width: 5, height: 10 },
+      targetModel: targetEnemy,
     },
     textureLoader,
     scene,
@@ -136,10 +142,10 @@ function createElectricShockSpell() {
       effect.start();
 
       setTimeout(() => {
-        flashModelWhite('kobold', 200);
+        flashModelWhite('enemy1', 200);
       }, 100);
       setTimeout(() => {
-        flashModelWhite('kobold', 200);
+        flashModelWhite('enemy1', 200);
       }, 400);
 
       playSound('assets/lightning-sound-short.mp3', { volume: 0.6, currentTime: 0.5, duration: 900 });
@@ -151,12 +157,13 @@ function createElectricShockSpell() {
 }
 
 function createAuraSpell() {
+  const heroModel = models['hero'];
   const effect = createFrameByFrameEffect({
     texturePaths: Array.from({ length: 32 }, (_, i) => `assets/energyBall/aura_test_1_32_${i + 1}.png`),
     frameInterval: 50,
     spriteOptions: {
-      scale: { x: 40, y: 40 },
-      position: { x: 0, y: 10, z: 0 },
+      scale: { x: 5, y: 5 },
+      targetModel: heroModel,
     },
   });
 
@@ -173,14 +180,15 @@ function createAuraSpell() {
 }
 
 function createSmallLightningSpell() {
+  const targetEnemy = models['enemy1'];
   const effect = createSpriteEffect(
     {
       texturePath: 'assets/LightningFreePack/512/Lightning_1_512-sheet.png',
       columns: 3,
       rows: 3,
       totalFrames: 9,
-      planeSize: { width: 80, height: 80 },
-      position: { x: 145, y: -20, z: 0 },
+      planeSize: { width: 5, height: 10 },
+      targetModel: targetEnemy,
     },
     textureLoader,
     scene,
@@ -197,7 +205,7 @@ function createSmallLightningSpell() {
       effect.start();
 
       setTimeout(() => {
-        flashModelWhite('kobold', 300);
+        flashModelWhite('enemy1', 300);
       }, 200);
 
       playSound('assets/lightning-sound-short.mp3', { volume: 0.6, currentTime: 0.5, duration: 900 });
@@ -209,14 +217,15 @@ function createSmallLightningSpell() {
 }
 
 function createTestLightningSpell() {
+  const targetEnemy = models['enemy1'];
   const effect = createSpriteEffect(
     {
       texturePath: 'assets/LightningFreePack/512/Lightning_4_512-sheet.png',
       columns: 3,
       rows: 3,
       totalFrames: 9,
-      planeSize: { width: 80, height: 80 },
-      position: { x: 145, y: -20, z: 0 },
+      planeSize: { width: 5, height: 10 },
+      targetModel: targetEnemy,
     },
     textureLoader,
     scene,
@@ -227,13 +236,13 @@ function createTestLightningSpell() {
   );
 
   const spell = new Spell({
-    name: 'Lightning Bolt',
+    name: 'Test Lightning',
     key: 'e',
     onCast: () => {
       effect.start();
 
       setTimeout(() => {
-        flashModelWhite('kobold', 300);
+        flashModelWhite('enemy1', 300);
       }, 200);
 
       playSound('assets/lightning-sound-short.mp3', { volume: 0.6, currentTime: 0.5, duration: 900 });
@@ -261,11 +270,12 @@ function createFrameByFrameEffect(options) {
   const material = new TR.SpriteMaterial({
     map: textures[0],
     transparent: true,
+    depthTest: true,
   });
 
   const sprite = new TR.Sprite(material);
   sprite.scale.set(spriteOptions.scale.x, spriteOptions.scale.y, 1);
-  sprite.position.set(spriteOptions.position.x, spriteOptions.position.y, spriteOptions.position.z);
+  sprite.position.copy(spriteOptions.targetModel.position);
   sprite.visible = false;
   scene.add(sprite);
 
@@ -282,16 +292,21 @@ function createFrameByFrameEffect(options) {
           currentFrame = (currentFrame + 1) % totalFrames;
           material.map = textures[currentFrame];
         }
+
+        // Update sprite position to match the target model
+        sprite.position.copy(spriteOptions.targetModel.position);
+
+        // Make the sprite face the camera
+        sprite.lookAt(camera.position);
       }
     },
   };
 }
 
 // Utility Functions
-
-// Helper Functions
 function flashModelWhite(modelName, duration) {
   const model = models[modelName];
+  if (!model) return;
   const flashMaterial = new TR.MeshBasicMaterial({ color: 0xffffff });
   const originalMaterials = [];
 
