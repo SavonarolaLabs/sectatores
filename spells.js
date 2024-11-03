@@ -8,6 +8,7 @@ export function createSpriteEffect(options, textureLoader, scene, camera, TR, MA
   let currentFrame = 0;
   let lastFrameTime = 0;
   const frameChangeInterval = 50; // Milliseconds per frame
+  const groundLevelOffset = 0.01; // Slightly above the ground to avoid clipping
 
   textureLoader.load(texturePath, (loadedTexture) => {
     texture = loadedTexture;
@@ -73,6 +74,10 @@ export function createSpriteEffect(options, textureLoader, scene, camera, TR, MA
 
         // Update plane position to match the target model
         plane.position.copy(targetModel.position);
+
+        // Adjust the plane's Y position to ensure it sits right above ground level
+        plane.position.y += (planeSize.height / 2) * 1.1;
+        //plane.position.y += 16;
 
         // Make the plane face the camera without rotation
         plane.quaternion.copy(camera.quaternion);

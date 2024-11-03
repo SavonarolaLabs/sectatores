@@ -75,6 +75,10 @@ function createLightningSpell() {
       const heroActions = actions.hero;
       const enemyActions = actions.enemy1;
 
+      setTimeout(() => {
+        flashModelWhite('enemy1', 300);
+      }, 1200);
+
       if (heroActions.attack && heroActions.idle) {
         heroActions.idle.fadeOut(0.1);
         heroActions.attack.reset().fadeIn(0.1).play();
@@ -124,7 +128,7 @@ function createElectricShockSpell() {
       columns: 4,
       rows: 4,
       totalFrames: 16,
-      planeSize: { width: 5, height: 10 },
+      planeSize: { width: 15, height: 30 },
       targetModel: targetEnemy,
     },
     textureLoader,
@@ -187,7 +191,7 @@ function createSmallLightningSpell() {
       columns: 3,
       rows: 3,
       totalFrames: 9,
-      planeSize: { width: 5, height: 10 },
+      planeSize: { width: 15, height: 30 },
       targetModel: targetEnemy,
     },
     textureLoader,
@@ -224,7 +228,7 @@ function createTestLightningSpell() {
       columns: 3,
       rows: 3,
       totalFrames: 9,
-      planeSize: { width: 5, height: 10 },
+      planeSize: { width: 15, height: 30 },
       targetModel: targetEnemy,
     },
     textureLoader,
