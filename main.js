@@ -6,6 +6,11 @@ import { gltfModels } from './gltfModels';
 
 const MAP_SIZE = 48;
 
+// Use the same model for allies and enemies
+const allyModelIndex = 3; // Adjust this index to use a different model for allies
+const enemyModelIndex = 3; // Adjust this index to use a different model for enemies
+const modelScale = 0.1;
+
 // Scene Setup
 const scene = new TR.Scene();
 const renderer = new TR.WebGLRenderer({ antialias: true });
@@ -170,7 +175,7 @@ let koboldGLTF = null;
 Promise.all([
   loadModel('hero', 'assets/fulmen/fulmen.gltf', {
     position: { x: 0, y: 0, z: 0 },
-    scale: { x: 10, y: 10, z: 10 },
+    scale: { x: modelScale, y: modelScale, z: modelScale },
   }),
   new Promise((resolve, reject) => {
     gltfLoader.load(
@@ -233,9 +238,6 @@ Promise.all([
   initializeSpells(textureLoader, scene, camera, TR, MAP_SIZE, backgroundMaterial, actions, mixers, models);
 });
 
-// Animation Loop
-const clock = new TR.Clock();
-
 renderer.setAnimationLoop(() => {
   const delta = clock.getDelta();
   Object.values(mixers).forEach((mixer) => mixer.update(delta));
@@ -249,10 +251,6 @@ renderer.setAnimationLoop(() => {
   renderer.render(scene, camera);
 });
 
-// Use the same model for allies and enemies
-const allyModelIndex = 1; // Adjust this index to use a different model for allies
-const enemyModelIndex = 1; // Adjust this index to use a different model for enemies
-
 // Character configurations
 const characterConfigs = [
   // Hero
@@ -260,7 +258,7 @@ const characterConfigs = [
     name: 'hero',
     path: 'assets/fulmen/fulmen.gltf',
     position: { x: -70, y: 0, z: 0 },
-    scale: { x: 10, y: 10, z: 10 },
+    scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: Math.PI / 2 },
   },
   // Allies (6 allies)
@@ -268,42 +266,42 @@ const characterConfigs = [
     name: 'ally1',
     path: gltfModels[allyModelIndex],
     position: { x: -50, y: 0, z: -50 },
-    scale: { x: 10, y: 10, z: 10 },
+    scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: Math.PI / 2 },
   },
   {
     name: 'ally2',
     path: gltfModels[allyModelIndex],
     position: { x: -50, y: 0, z: -30 },
-    scale: { x: 10, y: 10, z: 10 },
+    scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: Math.PI / 2 },
   },
   {
     name: 'ally3',
     path: gltfModels[allyModelIndex],
     position: { x: -50, y: 0, z: -10 },
-    scale: { x: 10, y: 10, z: 10 },
+    scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: Math.PI / 2 },
   },
   {
     name: 'ally4',
     path: gltfModels[allyModelIndex],
-    position: { x: -50, y: 0, z: 10 },
-    scale: { x: 10, y: 10, z: 10 },
+    position: { x: -50, y: 0, z: modelScale },
+    scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: Math.PI / 2 },
   },
   {
     name: 'ally5',
     path: gltfModels[allyModelIndex],
     position: { x: -50, y: 0, z: 30 },
-    scale: { x: 10, y: 10, z: 10 },
+    scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: Math.PI / 2 },
   },
   {
     name: 'ally6',
     path: gltfModels[allyModelIndex],
     position: { x: -50, y: 0, z: 50 },
-    scale: { x: 10, y: 10, z: 10 },
+    scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: Math.PI / 2 },
   },
   // Enemies (6 enemies)
@@ -311,42 +309,42 @@ const characterConfigs = [
     name: 'enemy1',
     path: gltfModels[enemyModelIndex],
     position: { x: 50, y: 0, z: -50 },
-    scale: { x: 10, y: 10, z: 10 },
+    scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: -Math.PI / 2 },
   },
   {
     name: 'enemy2',
     path: gltfModels[enemyModelIndex],
     position: { x: 50, y: 0, z: -30 },
-    scale: { x: 10, y: 10, z: 10 },
+    scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: -Math.PI / 2 },
   },
   {
     name: 'enemy3',
     path: gltfModels[enemyModelIndex],
     position: { x: 50, y: 0, z: -10 },
-    scale: { x: 10, y: 10, z: 10 },
+    scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: -Math.PI / 2 },
   },
   {
     name: 'enemy4',
     path: gltfModels[enemyModelIndex],
     position: { x: 50, y: 0, z: 10 },
-    scale: { x: 10, y: 10, z: 10 },
+    scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: -Math.PI / 2 },
   },
   {
     name: 'enemy5',
     path: gltfModels[enemyModelIndex],
     position: { x: 50, y: 0, z: 30 },
-    scale: { x: 10, y: 10, z: 10 },
+    scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: -Math.PI / 2 },
   },
   {
     name: 'enemy6',
     path: gltfModels[enemyModelIndex],
     position: { x: 50, y: 0, z: 50 },
-    scale: { x: 10, y: 10, z: 10 },
+    scale: { x: modelScale, y: modelScale, z: modelScale },
     rotation: { y: -Math.PI / 2 },
   },
 ];
@@ -360,19 +358,6 @@ Promise.all(loadPromises).then(() => {
 
 // Animation Loop
 const clock = new TR.Clock();
-
-renderer.setAnimationLoop(() => {
-  const delta = clock.getDelta();
-  Object.values(mixers).forEach((mixer) => mixer.update(delta));
-
-  // Update spells
-  spellManager.update(delta);
-
-  renderer.autoClear = false;
-  renderer.clear();
-  renderer.render(backgroundScene, backgroundCamera);
-  renderer.render(scene, camera);
-});
 
 // Event Listeners
 window.addEventListener('keydown', (event) => {
