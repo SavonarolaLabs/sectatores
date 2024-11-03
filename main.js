@@ -2,6 +2,7 @@ import * as TR from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createSpriteEffect } from './spells';
 import { initializeSpells, spellManager } from './initSpells';
+import { gltfModels } from './gltfModels';
 
 const MAP_SIZE = 48;
 
@@ -248,36 +249,156 @@ renderer.setAnimationLoop(() => {
   renderer.render(scene, camera);
 });
 
+// Use the same model for allies and enemies
+const allyModelIndex = 1; // Adjust this index to use a different model for allies
+const enemyModelIndex = 1; // Adjust this index to use a different model for enemies
+
+// Character configurations
+const characterConfigs = [
+  // Hero
+  {
+    name: 'hero',
+    path: 'assets/fulmen/fulmen.gltf',
+    position: { x: -70, y: 0, z: 0 },
+    scale: { x: 10, y: 10, z: 10 },
+    rotation: { y: Math.PI / 2 },
+  },
+  // Allies (6 allies)
+  {
+    name: 'ally1',
+    path: gltfModels[allyModelIndex],
+    position: { x: -50, y: 0, z: -50 },
+    scale: { x: 10, y: 10, z: 10 },
+    rotation: { y: Math.PI / 2 },
+  },
+  {
+    name: 'ally2',
+    path: gltfModels[allyModelIndex],
+    position: { x: -50, y: 0, z: -30 },
+    scale: { x: 10, y: 10, z: 10 },
+    rotation: { y: Math.PI / 2 },
+  },
+  {
+    name: 'ally3',
+    path: gltfModels[allyModelIndex],
+    position: { x: -50, y: 0, z: -10 },
+    scale: { x: 10, y: 10, z: 10 },
+    rotation: { y: Math.PI / 2 },
+  },
+  {
+    name: 'ally4',
+    path: gltfModels[allyModelIndex],
+    position: { x: -50, y: 0, z: 10 },
+    scale: { x: 10, y: 10, z: 10 },
+    rotation: { y: Math.PI / 2 },
+  },
+  {
+    name: 'ally5',
+    path: gltfModels[allyModelIndex],
+    position: { x: -50, y: 0, z: 30 },
+    scale: { x: 10, y: 10, z: 10 },
+    rotation: { y: Math.PI / 2 },
+  },
+  {
+    name: 'ally6',
+    path: gltfModels[allyModelIndex],
+    position: { x: -50, y: 0, z: 50 },
+    scale: { x: 10, y: 10, z: 10 },
+    rotation: { y: Math.PI / 2 },
+  },
+  // Enemies (6 enemies)
+  {
+    name: 'enemy1',
+    path: gltfModels[enemyModelIndex],
+    position: { x: 50, y: 0, z: -50 },
+    scale: { x: 10, y: 10, z: 10 },
+    rotation: { y: -Math.PI / 2 },
+  },
+  {
+    name: 'enemy2',
+    path: gltfModels[enemyModelIndex],
+    position: { x: 50, y: 0, z: -30 },
+    scale: { x: 10, y: 10, z: 10 },
+    rotation: { y: -Math.PI / 2 },
+  },
+  {
+    name: 'enemy3',
+    path: gltfModels[enemyModelIndex],
+    position: { x: 50, y: 0, z: -10 },
+    scale: { x: 10, y: 10, z: 10 },
+    rotation: { y: -Math.PI / 2 },
+  },
+  {
+    name: 'enemy4',
+    path: gltfModels[enemyModelIndex],
+    position: { x: 50, y: 0, z: 10 },
+    scale: { x: 10, y: 10, z: 10 },
+    rotation: { y: -Math.PI / 2 },
+  },
+  {
+    name: 'enemy5',
+    path: gltfModels[enemyModelIndex],
+    position: { x: 50, y: 0, z: 30 },
+    scale: { x: 10, y: 10, z: 10 },
+    rotation: { y: -Math.PI / 2 },
+  },
+  {
+    name: 'enemy6',
+    path: gltfModels[enemyModelIndex],
+    position: { x: 50, y: 0, z: 50 },
+    scale: { x: 10, y: 10, z: 10 },
+    rotation: { y: -Math.PI / 2 },
+  },
+];
+
+// Load all character models
+const loadPromises = characterConfigs.map((config) => loadModel(config.name, config.path, config));
+
+Promise.all(loadPromises).then(() => {
+  initializeSpells(textureLoader, scene, camera, TR, 0, null, actions, mixers, models);
+});
+
+// Animation Loop
+const clock = new TR.Clock();
+
+renderer.setAnimationLoop(() => {
+  const delta = clock.getDelta();
+  Object.values(mixers).forEach((mixer) => mixer.update(delta));
+
+  // Update spells
+  spellManager.update(delta);
+
+  renderer.autoClear = false;
+  renderer.clear();
+  renderer.render(backgroundScene, backgroundCamera);
+  renderer.render(scene, camera);
+});
+
 // Event Listeners
 window.addEventListener('keydown', (event) => {
   if (event.key === 't') {
-    // Resurrect all kobolds
     Object.keys(models).forEach((name) => {
-      if (name.startsWith('kobold')) {
-        const koboldActions = actions[name];
-        if (koboldActions.death && koboldActions.idle) {
-          koboldActions.death.reset().play();
-          koboldActions.idle.reset().play();
-        }
-
-        // Reset the kobold's material
-        const koboldModel = models[name];
-        koboldModel.traverse((node) => {
-          if (node.isMesh && node.userData.originalMaterial) {
-            node.material.copy(node.userData.originalMaterial);
-          }
-        });
+      const modelActions = actions[name];
+      if (modelActions.death && modelActions.idle) {
+        modelActions.death.reset().play();
+        modelActions.idle.reset().play();
       }
+
+      const model = models[name];
+      model.traverse((node) => {
+        if (node.isMesh && node.userData.originalMaterial) {
+          node.material.copy(node.userData.originalMaterial);
+        }
+      });
     });
   } else {
-    // Cast spell
     spellManager.castSpellByKey(event.key);
   }
 });
 
 window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
-  aspect = window.innerWidth / window.innerHeight;
+  const aspect = window.innerWidth / window.innerHeight;
   camera.left = -d * aspect;
   camera.right = d * aspect;
   camera.updateProjectionMatrix();
