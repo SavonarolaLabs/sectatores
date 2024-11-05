@@ -151,7 +151,6 @@ function loadModel(name, path, options = {}) {
 
         const modelActions = {};
         gltf.animations.forEach((clip) => {
-          console.log(clip.name.toLowerCase());
           const action = mixer.clipAction(clip);
           if (clip.name.toLowerCase().includes('idle')) {
             modelActions.idle = action;
@@ -337,4 +336,30 @@ window.addEventListener('resize', () => {
   camera.left = -d * aspect;
   camera.right = d * aspect;
   camera.updateProjectionMatrix();
+});
+
+//gltfLoader.load('assets/env/Baker_house.gltf', (gltf) => {
+gltfLoader.load('assets/env/Tree_1_snowy.gltf', (gltf) => {
+  const model = gltf.scene;
+  model.position.set(-22, 0, 2);
+  model.scale.set(1, 1, 1);
+  model.rotation.y = -Math.PI * 0.6;
+
+  model.traverse((node) => {
+    if (node.isMesh) {
+      node.castShadow = true;
+      //node.receiveShadow = true;
+
+      // Retain original texture and ensure transparency works
+      node.material = new TR.MeshBasicMaterial({
+        map: node.material.map, // Retain texture
+        transparent: true, // Enable transparency
+        opacity: node.material.opacity, // Set opacity from original material
+        side: TR.DoubleSide, // Optional: render both sides if necessary
+      });
+      node.material.needsUpdate = true;
+    }
+  });
+
+  scene.add(model);
 });
