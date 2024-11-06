@@ -132,7 +132,7 @@ renderer.domElement.addEventListener(
     if (event.deltaY > 0) {
       camera.zoom = Math.max(camera.zoom / (1 + zoomSpeed), 0.5);
     } else {
-      camera.zoom = Math.min(camera.zoom * (1 + zoomSpeed), 5);
+      camera.zoom = Math.min(camera.zoom * (1 + zoomSpeed), 10);
     }
     camera.updateProjectionMatrix();
     saveCameraSettings();
@@ -158,7 +158,7 @@ function loadCameraSettings() {
 }
 
 // Lighting
-const directionalLight = new TR.DirectionalLight(0xffffff, 1);
+const directionalLight = new TR.DirectionalLight(0xffffff, 2);
 directionalLight.position.set(0, 50, 0);
 directionalLight.castShadow = true;
 directionalLight.shadow.mapSize.width = 2048;
@@ -249,7 +249,7 @@ Promise.all([
     return terrainMaterials;
   }),
   // Load models
-  Promise.all([loadModel('assets/env/Tree_1_snowy.gltf'), loadModel('assets/env/Tree_4.gltf'), loadModel('assets/env/Baker_house.gltf')]).then(function (models) {
+  Promise.all([loadModel('assets/env/Tree_4.gltf'), loadModel('assets/env/Tree_4.gltf'), loadModel('assets/env/Baker_house.gltf')]).then(function (models) {
     return {
       treeModels: [models[0], models[1]],
       buildingModel: models[2],
@@ -381,10 +381,13 @@ function renderMap(gameMap, terrainMaterials, treeModels, buildingModel) {
       // For objects, use only translation without rotation
       const objectPositionMatrix = new TR.Matrix4().makeTranslation(x * TILE_SIZE, 0, y * TILE_SIZE);
 
+      // Apply scaling specifically for trees
       if (tile.object === 'tree') {
-        treeMesh.setMatrixAt(treeIndex++, objectPositionMatrix);
+        const scaleMatrix = objectPositionMatrix.clone().multiply(new TR.Matrix4().makeScale(0.2, 0.2, 0.2)); // Adjust scale here
+        treeMesh.setMatrixAt(treeIndex++, scaleMatrix);
       } else if (tile.object === 'building') {
-        buildingMesh.setMatrixAt(buildingIndex++, objectPositionMatrix);
+        const scaleMatrix = objectPositionMatrix.clone().multiply(new TR.Matrix4().makeScale(0.2, 0.2, 0.2)); // Adjust scale here
+        buildingMesh.setMatrixAt(buildingIndex++, scaleMatrix);
       }
     }
   }
