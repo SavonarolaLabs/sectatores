@@ -289,94 +289,47 @@ function loadModel(url) {
 }
 
 // Render the Map
-function renderMap(gameMap, terrainMaterials, treeModels, buildingModel) {
-  let grassTileCount = 0;
-  let waterTileCount = 0;
-  let treeCount = 0;
-  let buildingCount = 0;
+function renderMap(gameMap, terrainMaterials) {
+  const tileSize = TILE_SIZE;
+  const checkerGeometry = new TR.PlaneGeometry(tileSize, tileSize);
+  const materials = [
+    new TR.MeshStandardMaterial({ color: 0x4caf50 }), // Green
+    new TR.MeshStandardMaterial({ color: 0xffffff }), // White
+  ];
 
-  // First pass: Count the number of each type
-  for (let x = 0; x < gameMap.width; x++) {
-    for (let y = 0; y < gameMap.height; y++) {
-      const tile = gameMap.tiles[x][y];
+  // Create instanced meshes for each color
+  const greenTiles = new TR.InstancedMesh(checkerGeometry, materials[0], (MAP_SIZE * MAP_SIZE) / 2);
+  const whiteTiles = new TR.InstancedMesh(checkerGeometry, materials[1], (MAP_SIZE * MAP_SIZE) / 2);
 
-      // Count terrain types
-      if (tile.terrainType === 'grass') {
-        grassTileCount++;
-      } else if (tile.terrainType === 'water') {
-        waterTileCount++;
-      }
+  greenTiles.instanceMatrix.setUsage(TR.DynamicDrawUsage);
+  whiteTiles.instanceMatrix.setUsage(TR.DynamicDrawUsage);
 
-      // Count objects
-      if (tile.object === 'tree') {
-        treeCount++;
-      } else if (tile.object === 'building') {
-        buildingCount++;
-      }
-    }
-  }
+  let greenIndex = 0;
+  let whiteIndex = 0;
 
-  // Create instanced meshes
-  const tileGeometry = new TR.PlaneGeometry(TILE_SIZE, TILE_SIZE);
+  for (let x = 0; x < MAP_SIZE; x++) {
+    for (let z = 0; z < MAP_SIZE; z++) {
+      const positionMatrix = new TR.Matrix4();
 
-  const grassTileMesh = new TR.InstancedMesh(tileGeometry, terrainMaterials['grass'], grassTileCount);
-  grassTileMesh.instanceMatrix.setUsage(TR.DynamicDrawUsage);
-  grassTileMesh.receiveShadow = true;
+      // Set the position and rotation explicitly
+      positionMatrix.makeTranslation(x * tileSize + tileSize / 2, 0, z * tileSize + tileSize / 2);
 
-  const waterTileMesh = new TR.InstancedMesh(tileGeometry, terrainMaterials['water'], waterTileCount);
-  waterTileMesh.instanceMatrix.setUsage(TR.DynamicDrawUsage);
-  waterTileMesh.receiveShadow = true;
+      positionMatrix.multiply(new TR.Matrix4().makeRotationX(-Math.PI / 2)); // Ensure tiles are flat
 
-  const treeGeometry = treeModels[0].children[0].geometry;
-  const treeMaterial = treeModels[0].children[0].material;
-  const treeMesh = new TR.InstancedMesh(treeGeometry, treeMaterial, treeCount);
-  treeMesh.instanceMatrix.setUsage(TR.DynamicDrawUsage);
-  treeMesh.castShadow = true;
-
-  const buildingGeometry = buildingModel.children[0].geometry;
-  const buildingMaterial = buildingModel.children[0].material;
-  const buildingMesh = new TR.InstancedMesh(buildingGeometry, buildingMaterial, buildingCount);
-  buildingMesh.instanceMatrix.setUsage(TR.DynamicDrawUsage);
-  buildingMesh.castShadow = true;
-
-  // Second pass: Set instance matrices
-  let grassIndex = 0;
-  let waterIndex = 0;
-  let treeIndex = 0;
-  let buildingIndex = 0;
-
-  for (let x = 0; x < gameMap.width; x++) {
-    for (let y = 0; y < gameMap.height; y++) {
-      const tile = gameMap.tiles[x][y];
-      const positionMatrix = new TR.Matrix4().makeTranslation(x * TILE_SIZE, 0, y * TILE_SIZE);
-
-      // Set matrices for terrain
-      if (tile.terrainType === 'grass') {
-        grassTileMesh.setMatrixAt(grassIndex++, positionMatrix);
-      } else if (tile.terrainType === 'water') {
-        waterTileMesh.setMatrixAt(waterIndex++, positionMatrix);
-      }
-
-      // Set matrices for objects
-      if (tile.object === 'tree') {
-        treeMesh.setMatrixAt(treeIndex++, positionMatrix);
-      } else if (tile.object === 'building') {
-        buildingMesh.setMatrixAt(buildingIndex++, positionMatrix);
+      // Assign tiles to either the green or white instanced mesh based on checker pattern
+      if ((x + z) % 2 === 0) {
+        greenTiles.setMatrixAt(greenIndex++, positionMatrix);
+      } else {
+        whiteTiles.setMatrixAt(whiteIndex++, positionMatrix);
       }
     }
   }
 
-  // Update instance matrices
-  grassTileMesh.instanceMatrix.needsUpdate = true;
-  waterTileMesh.instanceMatrix.needsUpdate = true;
-  treeMesh.instanceMatrix.needsUpdate = true;
-  buildingMesh.instanceMatrix.needsUpdate = true;
+  greenTiles.instanceMatrix.needsUpdate = true;
+  whiteTiles.instanceMatrix.needsUpdate = true;
 
-  // Add meshes to the scene
-  scene.add(grassTileMesh);
-  scene.add(waterTileMesh);
-  scene.add(treeMesh);
-  scene.add(buildingMesh);
+  scene.add(greenTiles);
+  scene.add(whiteTiles);
 }
 
 // fps
