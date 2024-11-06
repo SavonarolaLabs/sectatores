@@ -19,7 +19,8 @@ export class Map {
       this.tiles[x] = [];
       for (let y = 0; y < height; y++) {
         // Initialize all tiles to 'grass'
-        this.tiles[x][y] = new Tile(x, y, 'grass');
+        const terrainType = (x + y) % 2 === 0 ? 'grass' : 'ground';
+        this.tiles[x][y] = new Tile(x, y, terrainType);
       }
     }
   }

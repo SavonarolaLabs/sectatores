@@ -221,18 +221,29 @@ for (let i = 0; i < 10; i++) {
 // Load Textures and Models
 Promise.all([
   // Load ground textures
-  Promise.all([loadTexture('assets/env/HandPaintedEnv/Ground_1.PNG'), loadTexture('assets/env/HandPaintedEnv/Ground_1_normal.PNG')]).then(function (textures) {
+  Promise.all([
+    loadTexture('assets/env/HandPaintedEnv/Ground_1.PNG'),
+    loadTexture('assets/env/HandPaintedEnv/Ground_1_normal.PNG'),
+    loadTexture('assets/env/HandPaintedEnv/Grass_1.PNG'),
+    loadTexture('assets/env/HandPaintedEnv/Grass_1_normal.PNG'),
+  ]).then(function (textures) {
     const groundColorTexture = textures[0];
     const groundNormalTexture = textures[1];
+    const grassColorTexture = textures[2];
+    const grassNormalTexture = textures[3];
 
     // Create terrain materials
     const terrainMaterials = {
       grass: new TR.MeshStandardMaterial({
-        map: groundColorTexture,
-        normalMap: groundNormalTexture,
+        map: grassColorTexture,
+        normalMap: grassNormalTexture,
       }),
       water: new TR.MeshStandardMaterial({ color: 0x0000ff }),
       mountain: new TR.MeshStandardMaterial({ color: 0x808080 }),
+      ground: new TR.MeshStandardMaterial({
+        map: groundColorTexture,
+        normalMap: groundNormalTexture,
+      }), // If ground is needed separately
     };
 
     return terrainMaterials;
@@ -292,6 +303,7 @@ function loadModel(url) {
 function renderMap(gameMap, terrainMaterials, treeModels, buildingModel) {
   let grassTileCount = 0;
   let waterTileCount = 0;
+  let groundTileCount = 0; // Add counter for ground tiles
   let treeCount = 0;
   let buildingCount = 0;
 
@@ -305,6 +317,8 @@ function renderMap(gameMap, terrainMaterials, treeModels, buildingModel) {
         grassTileCount++;
       } else if (tile.terrainType === 'water') {
         waterTileCount++;
+      } else if (tile.terrainType === 'ground') {
+        groundTileCount++; // Count ground tiles
       }
 
       // Count objects
@@ -327,6 +341,10 @@ function renderMap(gameMap, terrainMaterials, treeModels, buildingModel) {
   waterTileMesh.instanceMatrix.setUsage(TR.DynamicDrawUsage);
   waterTileMesh.receiveShadow = true;
 
+  const groundTileMesh = new TR.InstancedMesh(tileGeometry, terrainMaterials['ground'], groundTileCount); // Create ground mesh
+  groundTileMesh.instanceMatrix.setUsage(TR.DynamicDrawUsage);
+  groundTileMesh.receiveShadow = true;
+
   const treeGeometry = treeModels[0].children[0].geometry;
   const treeMaterial = treeModels[0].children[0].material;
   const treeMesh = new TR.InstancedMesh(treeGeometry, treeMaterial, treeCount);
@@ -342,20 +360,22 @@ function renderMap(gameMap, terrainMaterials, treeModels, buildingModel) {
   // Second pass: Set instance matrices
   let grassIndex = 0;
   let waterIndex = 0;
+  let groundIndex = 0; // Track ground tile index
   let treeIndex = 0;
   let buildingIndex = 0;
 
   for (let x = 0; x < gameMap.width; x++) {
     for (let y = 0; y < gameMap.height; y++) {
       const tile = gameMap.tiles[x][y];
-
-      // For terrain tiles, apply rotation to make them lie flat
       const tilePositionMatrix = new TR.Matrix4().makeTranslation(x * TILE_SIZE, 0, y * TILE_SIZE).multiply(new TR.Matrix4().makeRotationX(-Math.PI / 2));
 
+      // Set matrices for terrain
       if (tile.terrainType === 'grass') {
         grassTileMesh.setMatrixAt(grassIndex++, tilePositionMatrix);
       } else if (tile.terrainType === 'water') {
         waterTileMesh.setMatrixAt(waterIndex++, tilePositionMatrix);
+      } else if (tile.terrainType === 'ground') {
+        groundTileMesh.setMatrixAt(groundIndex++, tilePositionMatrix); // Set ground tile position
       }
 
       // For objects, use only translation without rotation
@@ -372,12 +392,14 @@ function renderMap(gameMap, terrainMaterials, treeModels, buildingModel) {
   // Update instance matrices
   grassTileMesh.instanceMatrix.needsUpdate = true;
   waterTileMesh.instanceMatrix.needsUpdate = true;
+  groundTileMesh.instanceMatrix.needsUpdate = true; // Update ground mesh
   treeMesh.instanceMatrix.needsUpdate = true;
   buildingMesh.instanceMatrix.needsUpdate = true;
 
   // Add meshes to the scene
   scene.add(grassTileMesh);
   scene.add(waterTileMesh);
+  scene.add(groundTileMesh); // Add ground mesh
   scene.add(treeMesh);
   scene.add(buildingMesh);
 }
