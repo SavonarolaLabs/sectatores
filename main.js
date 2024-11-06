@@ -51,21 +51,17 @@ function onMouseMove(event) {
     panEnd.set(event.clientX, event.clientY);
     panDelta.subVectors(panEnd, panStart);
 
-    // Calculate pan movement
     const panSpeed = 0.005 * camera.zoom;
     const deltaX = -panDelta.x * panSpeed;
-    const deltaY = panDelta.y * panSpeed;
+    const deltaY = -panDelta.y * panSpeed;
 
-    // Adjust camera position
-    const panOffset = new TR.Vector3();
-    panOffset.set(deltaX, 0, deltaY);
-    panOffset.applyMatrix4(new TR.Matrix4().extractRotation(camera.matrix));
+    // Use a vector to move the camera along the X and Z axes (in world space)
+    const panOffset = new TR.Vector3(deltaX, 0, deltaY);
+    panOffset.applyAxisAngle(new TR.Vector3(0, 1, 0), camera.rotation.y);
 
     camera.position.add(panOffset);
-
     panStart.copy(panEnd);
 
-    // Save camera settings after panning
     saveCameraSettings();
   }
 }
@@ -340,8 +336,38 @@ function renderMap(gameMap, terrainMaterials, treeModels, buildingModel) {
   }
 }
 
+// fps
+function updateFPSCounter() {
+  let lastFrameTime = performance.now();
+  let frameCount = 0;
+
+  return () => {
+    frameCount++;
+    const currentFrameTime = performance.now();
+
+    if (currentFrameTime - lastFrameTime >= 1000) {
+      document.getElementById('fpsCounter').textContent = `FPS: ${frameCount}`;
+      frameCount = 0;
+      lastFrameTime = currentFrameTime;
+    }
+  };
+}
+
+const updateFPS = updateFPSCounter();
+
+function updateMetrics(renderer) {
+  return () => {
+    const info = renderer.info;
+    document.getElementById('metricsCounter').textContent = `Triangles: ${info.render.triangles}, Draw Calls: ${info.render.calls}`;
+  };
+}
+
+const updateRenderMetrics = updateMetrics(renderer);
+
 // Animation Loop
 renderer.setAnimationLoop(() => {
+  updateFPS();
+  updateRenderMetrics();
   renderer.autoClear = false;
   renderer.clear();
   renderer.render(backgroundScene, backgroundCamera);

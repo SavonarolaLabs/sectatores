@@ -12,5 +12,39 @@
   </head>
   <body>
     <script type="module" src="./main.js"></script>
+    <div
+      id="fpsCounter"
+      style="
+        position: fixed;
+        top: 10px;
+        left: 10px;
+        font-size: 12px;
+        color: white;
+        font-family: Arial, sans-serif;
+        background-color: rgba(0, 0, 0, 0.5);
+        padding: 2px 5px;
+        border-radius: 3px;
+        z-index: 1000;
+      "
+    >
+      FPS: 0
+    </div>
+    <div
+      id="metricsCounter"
+      style="
+        position: fixed;
+        top: 30px;
+        left: 10px;
+        font-size: 12px;
+        color: white;
+        font-family: Arial, sans-serif;
+        background-color: rgba(0, 0, 0, 0.5);
+        padding: 2px 5px;
+        border-radius: 3px;
+        z-index: 1000;
+      "
+    >
+      Triangles: 0, Draw Calls: 0
+    </div>
   </body>
 </html>
