@@ -4,7 +4,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { Map, Tile } from './MapGenerator.js';
 
 // Constants
-const MAP_SIZE = 480;
+const MAP_SIZE = 96;
 const TILE_SIZE = 1;
 
 // Scene Setup
@@ -51,11 +51,11 @@ function onMouseMove(event) {
     panEnd.set(event.clientX, event.clientY);
     panDelta.subVectors(panEnd, panStart);
 
-    const panSpeed = 0.005 * camera.zoom;
+    // Scale panSpeed inversely with the camera's zoom level
+    const panSpeed = 0.04;
     const deltaX = -panDelta.x * panSpeed;
     const deltaY = -panDelta.y * panSpeed;
 
-    // Use a vector to move the camera along the X and Z axes (in world space)
     const panOffset = new TR.Vector3(deltaX, 0, deltaY);
     panOffset.applyAxisAngle(new TR.Vector3(0, 1, 0), camera.rotation.y);
 
@@ -95,7 +95,7 @@ renderer.domElement.addEventListener(
       panDelta.subVectors(panEnd, panStart);
 
       // Calculate pan movement
-      const panSpeed = 0.005 * camera.zoom;
+      const panSpeed = 0.04;
       const deltaX = -panDelta.x * panSpeed;
       const deltaY = panDelta.y * panSpeed;
 
